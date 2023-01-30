@@ -1,2 +1,6 @@
 /db.sqlite3
 /.env
+/media/
+/gfem_app/migrations/
+/gfem_app/static/
+/gfem_app/templates/
