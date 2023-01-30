@@ -1,0 +1,40 @@
+DATA_BASE:
+    Structure:
+      name_db: StructureSchema
+      fields:
+        - id
+        - struct_type
+        - number
+        - side
+    Node:
+      name_db: NodeSchema
+      fields:
+        - id
+        - side
+        - coord_x
+        - coord_y
+        - coord_z
+    Element:
+      name_db: ElementSchema
+      fields:
+        - id
+        - type
+        - side
+        - node
+        - property
+    Mass:
+      name_db: MassSchema
+      fields:
+        - id
+        - side
+        - weight
+
+WORK_TYPE:
+    - name: Внести данные
+      url_added: post_data
+    - name: Получить данные
+      url_added: get_data
+    - name: Внести изменения
+      url_added: update_data
+    - name: Дополнительные задачи
+      url_added: added_tasks
