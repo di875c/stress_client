@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+{% extends "hf_template.html" %}
+{%load static%}
+{% block content %}
+<script src={%static "js/gfem_java.js" %}>
+</script>
+<body>
+<div id="input-form" class="m-3">
+    <form method="post" id="parameters-form">
+                  <p>Выберите таблицу в которой нужно внести изменения</p>
+                  <select type="text" name="table_name" placeholder="Mетод расчета" list="method" required>
+                    <datalist id="table_name">
+                      <option>Structure</option>
+                      <option>Node</option>
+                        <option>Element</option>
+                    </datalist></select>
+                          <hr>
+                   <p>Введите поля для заполнения</p>
+                  <input type="number" id="condition_number" name="condition_number" placeholder="Количество условий..." onchange="conditionsGenerate(document.getElementById('input-form'), this)" required>
+                    <br>Задать условия: </br>
+                    <div id="parent-conditions"></div>
+                  <hr>
+      <!-- Submit button -->
+                <div class="d-grid gap-8 ">
+                  <button id="sender" type="button" class="btn btn-primary btn-block ms-5 me-5 mb-4" >Отправить</button>
+                </div>
+    </form>
+</div>
+
+ <div class="card opacity-100 border-white">
+     <div class="card-header">
+        <h3 class="text-center">Результаты Запроса</h3>
+     </div>
+     <div class="container" style="width:500;height:500">
+    </div>
+     <div class="table-responsive">
+        <h6 class="text-center"><u>Данные таблицы</u></h6><br>
+        <table class="table table-light table-striped" id="forces-table">
+            <tbody>
+            </tbody>
+          </table>
+    </div>
+ </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$("#sender").click(function () {
+    var frm = $('#parameters-form');
+    $.ajax({
+        url: '{% url 'gfem_get_response' %}',
+        data: frm.serialize(),
+        dataType: 'json',
+        success: function (data) {
+          alert(data["messages"])
+          $("#forces-table tbody").html(data['html']);
+        }
+      });
+    });
+</script>
+</body>
+{% endblock %}
+</html>

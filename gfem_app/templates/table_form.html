@@ -1,0 +1,13 @@
+{% if excel_selection %}
+<!--   <form-->
+<!--    enctype="multipart/form-data"-->
+<!--    id="id_ajax_upload_form" method="POST"-->
+<!--    novalidate="">-->
+      {{ form }}
+<!--      <input type="submit"/>-->
+<!--   </form>-->
+{% else %}
+  {{ form}}
+{% endif %}
+
+<!--{{ form}}-->

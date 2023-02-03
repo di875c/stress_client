@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+{% extends "hf_template.html" %}
+{%load static%}
+{% block content %}
+<script src={%static "js/gfem_java.js" %}>
+</script>
+<body>
+<div id="input-form" class="m-3">
+    <form method="post" id="parameters-form">
+                  <p>Выберите таблицу для которых нужно получить данные</p>
+                  <select type="text" id="table_name" name="table_name" placeholder="Mетод расчета" list="method" required>
+                    <datalist id="table-name" >
+                        {% for table_model in models %}
+                            <option>{{table_model}}</option>
+                        {% endfor %}
+                    </datalist></select>
+         <hr>
+                <p>Дополнительные условия</p>
+        <div id="added-fields">
+        {% include 'table_form.html' %}
+            </div>
+        <hr>
+                <div class="d-grid gap-8 ">
+                  <button id="sender" type="button" class="btn btn-primary btn-block ms-5 me-5 mb-4" >Отправить</button>
+                </div>
+    </form>
+</div>
+
+ <div class="card opacity-100 border-white">
+     <div class="card-header">
+        <h3 class="text-center">Результаты Запроса</h3>
+     </div>
+     <div class="container" style="width:500;height:500" id="load-to-file">
+    </div>
+     <div class="table-responsive">
+        <h6 class="text-center"><u>Результат запроса</u></h6><br>
+        <table class="table table-light table-striped" id="forces-table">
+            <tbody>
+            </tbody>
+          </table>
+    </div>
+ </div>
+</div>
+
+<script src={%static "js/jquery.min.js" %}></script>
+<script>
+$(document).ready(function(){
+    $("#table_name").change(function(){
+        var frm = $('#table_name');
+        $.ajax({
+            url: '{% url 'get_table_fields' %}',
+            data: frm.serialize(),
+            dataType: 'html',
+            success: function(data) {
+            $("#added-fields").html(data);
+            }
+          });
+        });
+    })
+</script>
+<script>
+$("#sender").click(function () {
+    var frm = $('#parameters-form');
+    $.ajax({
+        url: '{% url 'get_response' %}',
+        data: frm.serialize(),
+        type: 'GET',
+        success: function (data) {
+          alert(data["messages"]);
+          $("#added-fields").html(data);
+          $("#added-fields").html(data['form']);
+          $("#forces-table tbody").html(data['html']);
+          $("#load-to-file").load(data['load_to_file']);
+        },
+        error: function (data) {
+          alert(data.status + "\n" + data.responseJSON.error);
+        }
+      });
+    });
+</script>
+</body>
+{% endblock %}
+</html>
