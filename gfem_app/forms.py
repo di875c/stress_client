@@ -28,7 +28,7 @@ class BaseDynamicForm(forms.Form):
         # self.fields['button'] = forms.FileField(widget=forms.ClearableFileInput)
 
 
-# class StructureForm(forms.ModelForm):
-#     class Meta:
-#         model = Structure
-#         fields = '__all__'
+class UploadForm(forms.ModelForm):
+    class Meta:
+        model = Upload
+        fields = '__all__'

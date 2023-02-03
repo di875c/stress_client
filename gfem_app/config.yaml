@@ -6,29 +6,47 @@ DATA_BASE:
         - struct_type
         - number
         - side
+      ref_fields: False
     Node:
       name_db: NodeSchema
       fields:
         - id
+        - frame
+        - stringer
         - side
         - coord_x
         - coord_y
         - coord_z
+      ref_fields: True
     Element:
       name_db: ElementSchema
       fields:
         - id
-        - type
+        - element_type
+        - frame
+        - stringer
         - side
-        - node
+        - nodes
         - property
+      ref_fields: False
     Mass:
       name_db: MassSchema
       fields:
         - id
-        - side
+        - name
         - weight
-
+        - frame
+        - stringer
+        - side
+      ref_fields: True
+    Material:
+      name_db: MaterialSchema
+      fields:
+        - id
+        - density
+        - eu
+        - nu
+      ref_fields: False
 WORK_TYPE:
     - name: Внести данные
       url_added: post_data
