@@ -8,8 +8,8 @@
 <body>
 <div id="input-form" class="m-3">
     {% csrf_token %}
-    <form method="post" id="parameters-form">
-          <p>Выберите таблицу для которых нужно получить данные</p>
+    <form method="get" id="parameters-form">
+          <p>Выберите таблицу для которых нужно удалить данные</p>
           <select type="text" class="update_param_list" id="table_name" name="table_name" placeholder="Mетод расчета" list="method" required>
             <datalist id="table-name" >
                 {% for table_model in models %}
@@ -28,8 +28,8 @@
 
         <hr>
                 <div class="d-grid gap-8 ">
-                  <input type="hidden" name="_method" value="post">
-                  <button id="sender" type="submit" class="btn btn-primary btn-block ms-5 me-5 mb-4" >Отправить</button>
+                  <input type="hidden" name="_method" value="delete">
+                  <button id="sender" type="submit" class="btn btn-danger btn-block ms-5 me-5 mb-4" >Удалить</button>
                 </div>
     </form>
 </div>
@@ -67,10 +67,10 @@ $(document).ready(function(){
         });
     })
 </script>
- <script>
+<script>
     $('#parameters-form').submit(function(e){
         e.preventDefault();
-        alert("mdasd");
+        alert("Delete");
         var formData = new FormData(this);
         $.ajax({
             type: 'POST',

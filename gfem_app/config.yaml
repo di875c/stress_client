@@ -2,7 +2,7 @@ DATA_BASE:
     Structure:
       name_db: StructureSchema
       fields:
-        - id
+        - uid
         - struct_type
         - number
         - side
@@ -10,7 +10,7 @@ DATA_BASE:
     Node:
       name_db: NodeSchema
       fields:
-        - id
+        - uid
         - frame
         - stringer
         - side
@@ -21,7 +21,7 @@ DATA_BASE:
     Element:
       name_db: ElementSchema
       fields:
-        - id
+        - uid
         - element_type
         - frame
         - stringer
@@ -32,7 +32,7 @@ DATA_BASE:
     Mass:
       name_db: MassSchema
       fields:
-        - id
+        - uid
         - name
         - weight
         - frame
@@ -42,7 +42,7 @@ DATA_BASE:
     Material:
       name_db: MaterialSchema
       fields:
-        - id
+        - uid
         - density
         - eu
         - nu
@@ -54,5 +54,7 @@ WORK_TYPE:
       url_added: get_data
     - name: Внести изменения
       url_added: update_data
+    - name: Удалить данные
+      url_added: delete_data
     - name: Дополнительные задачи
       url_added: added_tasks

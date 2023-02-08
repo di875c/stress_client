@@ -48,10 +48,20 @@ def simple_view(request, template, *args, **kwargs):
 
 
 class BaseInteract(View):
+    http_method_names = ['get', 'post', 'put', 'delete']
+
+    def dispatch(self, request, *args, **kwargs):
+        method = self.request.POST.get('_method', '').lower()
+        if method == 'put':
+            return self.put(request, *args, **kwargs)
+        if method == 'delete':
+            return self.delete(request, *args, **kwargs)
+        return super(BaseInteract, self).dispatch(request, *args, **kwargs)
+
     @error_function
     def get(self, request):
-        parameters = {k: v for k, v in request.GET.dict().items() if v and k != 'table_name'}
-        # print(parameters)
+        parameters = {k: v for k, v in request.GET.dict().items() if v and k not in ('table_name', '_method')}
+        print(parameters)
         table_name = request.GET.dict()['table_name']
         url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
         # print(url, '\n', parameters)
@@ -83,9 +93,9 @@ class BaseInteract(View):
         table_name = parameters.pop('table_name')
         # print(parameters)
         if 'excel_selection' in parameters:
-            print(request.FILES)
-            form = UploadForm(parameters['title'], request.FILES)
-            dct = from_xls_to_dict(request.FILES['upload'])
+            # print(request.FILES, '\n', CONFIG['DATA_BASE'][table_name]['ref_fields'])
+            # form = UploadForm(parameters['title'], request.FILES)
+            dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE'][table_name]['ref_fields'])
             print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
         else:
             form = BaseDynamicForm(request.POST, {"dynamic_fields": parameters})
@@ -105,6 +115,73 @@ class BaseInteract(View):
         else:
             return JsonResponse({'error': 'Server return status not 200'}, status=404)
 
+    @error_function
+    def delete(self, request):
+        print(request.POST)
+        parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
+        url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
+        table_name = parameters.pop('table_name')
+        # print(parameters)
+        if 'excel_selection' in parameters:
+            # print(request.FILES, '\n', CONFIG['DATA_BASE'][table_name]['ref_fields'])
+            # form = UploadForm(parameters['title'], request.FILES)
+            dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE'][table_name]['ref_fields'], ['uid'])
+            print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
+            parameters = {'table_name': CONFIG['DATA_BASE'][table_name]['name_db']}
+            print(parameters)
+            response = requests.delete(url, params=parameters, data=json.dumps({"parameters": dct}),
+                                       headers={'Content-Type': 'application/json'})
+        else:
+            form = BaseDynamicForm(request.POST, {"dynamic_fields": parameters})
+            if not form.is_valid():
+                return render(request, 'table_form.html', {'form': form})
+            parameters['table_name'] = CONFIG['DATA_BASE'][table_name]['name_db']
+            print(parameters)
+            response = requests.delete(url, params=parameters)
+        # url = "https://46bda8ba-446a-4aa1-b765-00c57f94efe3.mock.pstmn.io" + '/db'
+        print(response.status_code, response.text)
+        if response.status_code == 200:
+            data = {'messages': f'Тестируем. {response.text}'}
+            return JsonResponse(data)
+        elif response.status_code in (502, 422):
+            return JsonResponse({'error': "Error #{} \n{}".format(response.status_code, response.text)}
+                                , status=response.status_code)
+        else:
+            return JsonResponse({'error': 'Server return status not 200'}, status=404)
+
+    @error_function
+    def put(self, request):
+        print(request.POST)
+        parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
+        url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
+        table_name = parameters.pop('table_name')
+        print(parameters)
+        if 'excel_selection' in parameters:
+            # print(request.FILES, '\n', CONFIG['DATA_BASE'][table_name]['ref_fields'])
+            # form = UploadForm(parameters['title'], request.FILES)
+            dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE'][table_name]['ref_fields'], ['uid'])
+            print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
+            parameters = {'table_name': CONFIG['DATA_BASE'][table_name]['name_db']}
+            print(parameters)
+            response = requests.put(url, params=parameters, data=json.dumps({"parameters": dct}),
+                                       headers={'Content-Type': 'application/json'})
+        else:
+            form = BaseDynamicForm(request.POST, {"dynamic_fields": parameters})
+            if not form.is_valid():
+                return render(request, 'table_form.html', {'form': form})
+            parameters['table_name'] = CONFIG['DATA_BASE'][table_name]['name_db']
+            print(parameters)
+            response = requests.put(url, params=parameters)
+        # url = "https://46bda8ba-446a-4aa1-b765-00c57f94efe3.mock.pstmn.io" + '/db'
+        print(response.status_code, response.text)
+        if response.status_code == 200:
+            data = {'messages': f'Тестируем. {response.text}'}
+            return JsonResponse(data)
+        elif response.status_code in (502, 422):
+            return JsonResponse({'error': "Error #{} \n{}".format(response.status_code, response.text)}
+                                , status=response.status_code)
+        else:
+            return JsonResponse({'error': 'Server return status not 200'}, status=404)
 
 class FileSaveInteract(View):
     def get(self, request, template):
@@ -124,8 +201,8 @@ def ajax_get_fields(request, *args, **kwargs):
         param['form'] = BaseDynamicForm({"dynamic_fields": table_fields}).as_table()
     else:
         param['excel_selection'] = True
-        param['form'] = UploadForm.as_table()
-    print(param)
+        param['form'] = UploadForm
+    # print(param)
     return render(request, 'table_form.html', param)
 
 

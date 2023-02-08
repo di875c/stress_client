@@ -32,13 +32,13 @@ def convert_to_xlsx(json_data: dict) -> QuerySet[Upload]:
                         to_excel(excel_writer=tmp, sheet_name=_key)
         else:
             df.to_excel(excel_writer=tmp)
-    db_file = Upload.objects.create(title='NamedTemporaryFile.xlsx', upload='NamedTemporaryFile.xlsx')
+    db_file = Upload.objects.create(upload='NamedTemporaryFile.xlsx')
     excel_file = Upload.objects.get(id=db_file.id)
     return excel_file, df.to_html(justify='left')
 
 
 @error_function
-def from_xls_to_dict(excel_file: object) -> dict:
+def from_xls_to_dict(excel_file: object, ref_fields: bool, prm_dct=['all']) -> dict:
     """
    excel_file: Excel file with parameters in each sheet
    return [{'frame': '10', 'stringer': '8', 'side': 'RHS', 'id': 16408200,
@@ -46,13 +46,15 @@ def from_xls_to_dict(excel_file: object) -> dict:
    """
     xl = pd.ExcelFile(excel_file)
     sheet_names = xl.sheet_names
-    df = {name: xl.parse(name, index_col=[1, 0]) for name in sheet_names if name != 'Readme'}
+    sheet_names.remove('Readme') if 'Readme' in sheet_names else None
+    df = {name: xl.parse(name, index_col=[1, 0]) for name in sheet_names}
     parameter_list = []
-    for ref1, column in df['id'].items():
+    prm_lst = sheet_names if 'all' in prm_dct else prm_dct
+    for ref1, column in df[prm_lst[0]].items():
         if column.notnull().any():
             for ref2, data in column.items():
-                temp_dict = dict(zip(["side", "stringer", "frame"], [*ref2] + [ref1]))
-                temp_dict.update({name: str(df[name][ref1][ref2]) for name in sheet_names if name != 'Readme'})
+                temp_dict = dict(zip(["side", "stringer", "frame"], [*ref2] + [ref1])) if ref_fields else dict()
+                temp_dict.update({name: str(df[name][ref1][ref2]) for name in prm_lst if pd.notna(df[name][ref1][ref2])})
                 parameter_list.append(temp_dict)
-    # print(parameter_list)
+    print(parameter_list)
     return parameter_list

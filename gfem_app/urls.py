@@ -25,7 +25,8 @@ urlpatterns = [
     path(r'ajax/get_response/', csrf_exempt(BaseInteract.as_view()), name='get_response'),
     path(r'ajax/get_table_fields/', ajax_get_fields, name='get_table_fields'),
     path('gfem/post_data', simple_view, {'template': 'post_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
-    path('gfem/update_data', simple_view, {'template': 'put_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
+    path('gfem/update_data', simple_view, {'template': 'change_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
+    path('gfem/delete_data', simple_view, {'template': 'delete_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
     path(r'gfem/file_save', csrf_exempt(FileSaveInteract.as_view()), {'template': 'file_save.html'},
          name='save_form'),
 ]
