@@ -1,13 +1,15 @@
-{% if excel_selection %}
-<!--   <form-->
-<!--    enctype="multipart/form-data"-->
-<!--    id="id_ajax_upload_form" method="POST"-->
-<!--    novalidate="">-->
-      {{ form }}
-<!--      <input type="submit"/>-->
-<!--   </form>-->
-{% else %}
-  {{ form}}
+<table>
+{{ form }}
+</table>
+<hr>
+<div>
+{% if save_file_form %}
+    <p>Выберите в каком формате сохранить результат</p>
+          <select type="text" id="file_sufix" name="file_type" list="method" required>
+            <datalist id="file-sufix" >
+                {% for file_format in save_file_form %}
+                    <option>{{file_format}}</option>
+                {% endfor %}
+            </datalist></select>
 {% endif %}
-
-<!--{{ form}}-->
+</div>

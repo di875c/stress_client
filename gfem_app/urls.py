@@ -27,6 +27,9 @@ urlpatterns = [
     path('gfem/post_data', simple_view, {'template': 'post_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
     path('gfem/update_data', simple_view, {'template': 'change_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
     path('gfem/delete_data', simple_view, {'template': 'delete_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
+    path('gfem/service_CS', simple_view, {'template': 'calculate_page.html', 'models': CONFIG['CALCULATION_TYPE']
+         ['CROSS-SECTION']['SECTION-TYPE'].keys()}),
+    path(r'ajax/CS-calculation/', csrf_exempt(cs_calculation), name='calculate_CS'),
     path(r'gfem/file_save', csrf_exempt(FileSaveInteract.as_view()), {'template': 'file_save.html'},
          name='save_form'),
 ]

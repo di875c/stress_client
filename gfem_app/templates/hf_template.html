@@ -29,10 +29,16 @@
               </a>
             <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="dropdownMenuLight">
                 {% for data in catalogs %}
-                    <li><a class="dropdown-item" href="/gfem/{{ data.url_added }}">{{ data.name }}</a></li>
-                {% endfor%}
+                {% if data.subtasks %}
+                    <hr>
+                         {% for task in data.subtasks %}
+                            <li><a class="dropdown-item" href="/gfem/{{ task.url_added }}">{{ task.name }}</a></li>
+                         {% endfor %}
+                {% else %}
+                <li><a class="dropdown-item" href="/gfem/{{ data.url_added }}">{{ data.name }}</a></li>
+                {% endif%}
+                {% endfor %}
             </ul>
-            </li>
             <li class="nav-item"><a class="nav-link active"  href="/aboutus">Помощь</a></li>
             <li class="nav-item"><a class="nav-link active"  href="/contacts">Контакты</a></li>
           </ul>

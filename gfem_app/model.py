@@ -21,5 +21,5 @@ from django.db import models
 #     side = models.CharField(max_length=3)
 
 class Upload(models.Model):
-    title = models.CharField(max_length=50)
+    # title = models.CharField(max_length=50)
     upload = models.FileField(upload_to="media")

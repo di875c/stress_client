@@ -1,4 +1,9 @@
 DATA_BASE:
+    ---Select_table---:
+      name_db: Node
+      fields:
+        - None
+      ref_fields: False
     Structure:
       name_db: StructureSchema
       fields:
@@ -18,6 +23,15 @@ DATA_BASE:
         - coord_y
         - coord_z
       ref_fields: True
+      file_type:
+        excel:
+          fr_str_format
+        bdf:
+          - uid
+          - cid
+          - coord_x
+          - coord_y
+          - coord_z
     Element:
       name_db: ElementSchema
       fields:
@@ -27,8 +41,16 @@ DATA_BASE:
         - stringer
         - side
         - nodes
-        - property
+        - property_id
       ref_fields: False
+      file_type:
+        excel:
+          fr_str_format
+        bdf:
+          - uid
+          - coord_x
+          - coord_y
+          - coord_z
     Mass:
       name_db: MassSchema
       fields:
@@ -39,6 +61,14 @@ DATA_BASE:
         - stringer
         - side
       ref_fields: True
+      file_type:
+        excel:
+          fr_str_format
+        bdf:
+          - uid
+          - coord_x
+          - coord_y
+          - coord_z
     Material:
       name_db: MaterialSchema
       fields:
@@ -47,6 +77,62 @@ DATA_BASE:
         - eu
         - nu
       ref_fields: False
+      file_type:
+        excel:
+          fr_str_format
+        bdf:
+          - uid
+          - coord_x
+          - coord_y
+          - coord_z
+    Sections:
+      name_db: SectionSchema
+      fields:
+        - uid
+        - type
+        - section_type
+        - frame
+        - stringer
+        - side
+      ref_fields: True
+      file_type:
+        excel:
+          fr_str_format
+    Section property:
+      name_db: SectionPropertySchema
+      fields:
+        - uid
+        - type
+        - area
+        - inertia_xx
+        - inertia_yy
+        - inertia_xy
+        - inertia_torsion
+        - alpha
+        - inertia_min
+        - inertia_max
+      ref_fields: True
+      file_type:
+        excel:
+          fr_str_format
+    Element property:
+      name_db: ElPropertySchema
+      fields:
+        - uid
+        - property_type
+        - material_id
+        - shell_thick
+        - section_start
+        - section_end
+      ref_fields: False
+      file_type:
+        excel:
+          fr_str_format
+        bdf:
+          - uid
+          - coord_x
+          - coord_y
+          - coord_z
 WORK_TYPE:
     - name: Внести данные
       url_added: post_data
@@ -56,5 +142,50 @@ WORK_TYPE:
       url_added: update_data
     - name: Удалить данные
       url_added: delete_data
-    - name: Дополнительные задачи
-      url_added: added_tasks
+    - subtasks:
+      - name: Расчет поперечных сечений
+        url_added: service_CS
+      - name: Расчет нагрузок
+        url_added: added_tasks
+CALCULATION_TYPE:
+  CROSS-SECTION:
+    SECTION-TYPE:
+      ---Select_Section---:
+        Class_name: None
+        Parameters:
+          - None
+      Rectangular:
+        Class_name: Square
+        Parameters:
+          - height
+          - width
+      I-Section:
+        Class_name: ISection
+        Parameters:
+          - width_1
+          - height
+          - width_2
+          - th_1
+          - th_2
+          - th_3
+      L-Section:
+        Class_name: AngleSection
+        Parameters:
+          - width
+          - height
+          - th_1
+          - th_2
+      C-Section:
+        Class_name: CSection
+        Parameters:
+          - width_1
+          - height
+          - width_2
+          - th_1
+          - th_2
+          - th_3
+    STANDARD-PART:
+      Parameters:
+        - div_x
+        - div_y
+        - alpha
