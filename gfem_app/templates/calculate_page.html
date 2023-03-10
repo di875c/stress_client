@@ -6,11 +6,14 @@
 <script src={%static "js/gfem_java.js" %}>
 </script>
 <body>
-<div id="input-form" class="m-3">
-    {% csrf_token %}
-    <form method="post" id="parameters-form">
-          <p>Выберите тип сечения</p>
-          <select type="text" class="update_param_list" id="table_name" name="table_name" placeholder="Mетод расчета" list="method" required>
+{% csrf_token %}
+<div class="row row-cols-1 row-cols-sm-2 g-3">
+    <div class="card opacity-100 border-white" id="input-form">
+        <div class="card-header">Входные параметры</div>
+        <div class="card-body ">
+            <form method="post" id="parameters-form">
+            <p>Выберите тип сечения</p>
+            <select type="text" class="update_param_list" id="table_name" name="table_name" placeholder="Mетод расчета" list="method" required>
             <datalist id="table-name" >
                 {% for table_model in models %}
                     <option>{{table_model}}</option>
@@ -20,11 +23,12 @@
             <input class="update_param_list" type="checkbox" name="excel_selection" id="excel_checkbox" checked>
             <label for="excel_checkbox"> Загрузить данные из excel? </label>
                 </div>
-         <hr>
-                <p>Ручной ввод данных</p>
-        <div id="added-fields">
+            <div id="points_number" class="mt-3"> </div>
+            <hr>
+            <p>Ручной ввод данных</p>
+            <div id="added-fields">
             {% include 'table_form.html' %}
-        </div>
+            </div>
 
 <!--        <div class="mt-3">-->
 <!--            <input class="update_param_list" type="checkbox" name="save_in_file" id="save_file_checkbox" checked>-->
@@ -32,14 +36,23 @@
 <!--            </div>-->
 <!--        <hr>-->
 
-                <div class="d-grid gap-8 ">
-                  <input type="hidden" name="_method" value="post">
+            <div class="d-grid gap-8 ">
+                  <input type="hidden" name="_method" value="post"/>
                   <button id="sender" type="submit" class="btn btn-primary btn-block ms-5 me-5 mb-4" >Рассчитать</button>
-                </div>
-    </form>
+            </div>
+            </form>
+        </div>
+    </div>
+    <div class="card opacity-100 border-white">
+        <div class="card-header">Схема сечения</div>
+        <div class="card-body ">
+            <div class="container" style="width:500;height:500">
+            <img id="picture1" class="img-fluid" src= alt="No picture">
+        </div>
+    </div>
+    </div>
 </div>
-
- <div class="card opacity-100 border-white">
+    <div class="card opacity-100 border-white">
      <div class="card-header">
         <h3 class="text-center">Результаты Расчета</h3>
      </div>
@@ -53,23 +66,43 @@
           </table>
     </div>
  </div>
-</div>
+
 
 <script src={%static "js/jquery.min.js" %}></script>
 <script>
+function send_table_parameters(){
+                    var frm = $('#table_name').serialize();
+                    var chk = $('#excel_checkbox').serialize();
+                    var number = $('#points').serialize();
+                    var data = frm +'&' + chk + '&' + number
+                    $.ajax({
+                        url: '{% url 'get_table_fields' %}',
+                        data: data,
+                        success: function(data) {
+                        $("#added-fields").html(data);
+                        }
+                      });
+                    }
+
 $(document).ready(function(){
-    $(".update_param_list").change(function(){
-        var frm = $('#table_name').serialize();
-        var chk = $('#excel_checkbox').serialize();
-        var data = frm +'&' + chk
+    $("#table_name").change(function(e){
+        var frm = $('#table_name').val();
+        if(frm=='FEM-Polygon'){
+                $("#points_number").html("<label>количество точек в сечении: <input class='update_param_list' type='number' name='points' id='points' value=4></label>");
+                $("#points").on('change', send_table_parameters);
+        } else {
+            $("#points_number").html("");
+        };
         $.ajax({
-            url: '{% url 'get_table_fields' %}',
-            data: data,
             success: function(data) {
-            $("#added-fields").html(data);
+            $("#picture1").attr('src', '/static/img/'+ frm +'.png');
             }
-          });
+            });
         });
+    })
+
+$(document).ready(function(){
+    $(".update_param_list").change(send_table_parameters);
     })
 </script>
  <script>
@@ -82,10 +115,9 @@ $(document).ready(function(){
             data: formData,
             success: function (data) {
                       alert(data["messages"]);
-                      $("#added-fields").html(data);
-<!--                      $("#added-fields").html(data['form']);-->
                       $("#forces-table tbody").html(data['html']);
                       $("#load-to-file").load(data['load_to_file']);
+                      $("#picture1").attr('src', data['picture']);
                 },
              error: function (data) {
                  alert(data.status + "\n" + data.responseJSON.error);

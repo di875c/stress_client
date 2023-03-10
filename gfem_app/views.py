@@ -6,7 +6,8 @@ from stress_client.settings import SERVER, CONFIG
 import requests
 from json2html import *
 from .forms import *
-from .utils import convert_to_xlsx, from_xls_to_dict, cs_converter, convert_from_db
+from .utils import convert_to_xlsx, from_xls_to_dict, cs_converter, convert_from_db, recur_unpack, pd
+
 
 def error_function(func):
     def _wrapper(*args, **kwargs):
@@ -23,10 +24,10 @@ def error_function(func):
 
 
 def simple_view(request, template, *args, **kwargs):
-    if request.method == 'GET':
-        param = kwargs if kwargs else {}
-        param['catalogs'] = CONFIG['WORK_TYPE']
-        return render(request, template, param)
+    # if request.method == 'GET':
+    param = kwargs if kwargs else {}
+    param['catalogs'] = CONFIG['WORK_TYPE']
+    return render(request, template, param)
 
 
 
@@ -41,7 +42,7 @@ class BaseInteract(View):
             return self.delete(request, *args, **kwargs)
         return super(BaseInteract, self).dispatch(request, *args, **kwargs)
 
-    @error_function
+    # @error_function
     def get(self, request):
         parameters = {k: v for k, v in request.GET.dict().items() if v and k not in ('table_name', '_method',
                                                                                      'save_in_file', 'file_type')}
@@ -61,9 +62,9 @@ class BaseInteract(View):
             out_file, html_table = convert_from_db(json_data=response.json()['parameters'],
                                                    file_format=file_format,
                                                    table_name=table_name)
-            # print(excel_file.title, excel_file.upload.url)
+            file_url = f"file_save?file={out_file.upload.url}" if out_file else None
             data = {'form': form.as_table(), 'messages': 'Тестируем', "html": html_table,
-                    "load_to_file": f"file_save?file={out_file.upload.url}"}
+                    "load_to_file": file_url}
             return JsonResponse(data, status=200)
         elif response.status_code in (502, 422):
             return JsonResponse({'error': "Error #{} \n{}".format(response.status_code, response.text),
@@ -186,8 +187,12 @@ def ajax_get_fields(request, *args, **kwargs):
         elif table_name in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE']:
             table_fields = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][table_name]['Parameters'] +\
                            CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']
+            if table_name == "FEM-Polygon":
+                number = int(param.pop('points'))
+                table_fields = [(f'x_{idx}', f'y_{idx}') for idx in range(number)]
+                table_fields = recur_unpack(table_fields)
             param['form'] = BaseDynamicForm({"dynamic_fields": table_fields, "type_fields": 'float'}).as_table()
-    else:
+    elif param['excel_selection'] == 'on':
         param['excel_selection'] = True
         param['form'] = UploadForm
     if 'save_in_file' in param and param['save_in_file'] == 'on' and 'file_type' in CONFIG['DATA_BASE'][table_name]:
@@ -197,18 +202,28 @@ def ajax_get_fields(request, *args, **kwargs):
 
 def cs_calculation(request, *args, **kwargs):
     parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
+    print(parameters)
     if 'excel_selection' in parameters:
-        lst_dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE']['Sections']['ref_fields'])
-        sections = cs_converter(lst_dct)
+        if parameters['table_name'] == 'FEM-Polygon':
+            _dct = pd.read_csv(request.FILES['upload'], header=0).to_dict()
+            lst_dct = [{f'{_k}_{_in_k}': _in_v for _k, _v in _dct.items() for _in_k, _in_v in _v.items()}]
+            lst_dct[0]['points'] = len(lst_dct[0])/2
+            lst_dct[0]['section_type'] = parameters['table_name']
+            print(lst_dct)
+        else:
+            lst_dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE']['Sections']['ref_fields'])
+        sections, picture = cs_converter(lst_dct)
     else:
         dct = {k: float(v) for k, v in parameters.items() if k not in ('table_name', 'excel_selection')}
-        # sections = [globals()[CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE']
-        #             [parameters['table_name']]['Class_name']](dct).output]
         dct['section_type'] = parameters['table_name']
-        sections = cs_converter([dct])
-    # print(dct)
+        print(dct)
+        sections, picture = cs_converter([dct])
+    # print(picture)
     # section = cs_analysis(dct)
-    excel_file, html_table = convert_to_xlsx(sections, True)
-    print(html_table)
-    data = {'message': 'тестируем', 'html': html_table, "load_to_file": f"file_save?file={excel_file.upload.url}"}
+    excel_file, html_table = convert_from_db(sections, 'excel', parameters['table_name'], True)
+    data = {'message': 'тестируем', 'html': html_table,
+            "load_to_file": f"file_save?file={excel_file.upload.url}",
+            'picture': picture
+            }
+    print('template rendering started')
     return JsonResponse(data, status=200)

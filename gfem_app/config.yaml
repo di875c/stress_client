@@ -27,11 +27,12 @@ DATA_BASE:
         excel:
           fr_str_format
         bdf:
-          - uid
-          - cid
-          - coord_x
-          - coord_y
-          - coord_z
+          GRID: GRID
+          uid:
+          CID: ''
+          coord_x:
+          coord_y:
+          coord_z:
     Element:
       name_db: ElementSchema
       fields:
@@ -47,10 +48,15 @@ DATA_BASE:
         excel:
           fr_str_format
         bdf:
-          - uid
-          - coord_x
-          - coord_y
-          - coord_z
+          element_type:
+          uid:
+          property_id:
+          node_1:
+          node_2:
+          node_3:
+          node_4:
+          offset_1:
+          offset_2:
     Mass:
       name_db: MassSchema
       fields:
@@ -184,6 +190,11 @@ CALCULATION_TYPE:
           - th_1
           - th_2
           - th_3
+      FEM-Polygon:
+        Class_name: FemPolygon
+        Parameters:
+          - x
+          - y
     STANDARD-PART:
       Parameters:
         - div_x

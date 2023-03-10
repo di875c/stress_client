@@ -1,3 +1,5 @@
+import datetime
+import re
 import pandas as pd
 from .model import Upload
 from django.db.models.query import QuerySet
@@ -17,14 +19,15 @@ def error_function(func):
     return _wrapper
 
 
+# @error_function
 def convert_from_db(json_data: dict, file_format: str, table_name: str, easy_format=False) -> (QuerySet[Upload], pd.DataFrame.to_html):
-    df = pd.DataFrame(json_data)
+    # print(json_data)
+    df = pd.DataFrame(data=json_data)
     if 'position' in df.columns:
         df_add = df.apply(lambda row: row.position['parameter'], axis=1).apply(pd.Series)
         df = pd.concat([df, df_add], axis=1).drop('position', axis=1)
-    df.dropna(axis=1, how='all', inplace=True)
     if file_format == 'excel':
-        filename = convert_to_xlsx(df, easy_format)
+        filename = convert_to_xlsx(df, table_name, easy_format)
     elif file_format == 'bdf':
         filename = convert_to_bdf(df, table_name)
     else:
@@ -34,34 +37,41 @@ def convert_from_db(json_data: dict, file_format: str, table_name: str, easy_for
     return file_out, df.to_html(justify='left')
 
 
+# @error_function
+def convert_to_bdf(df: pd.DataFrame, table_name: str) -> str:
+    """
+     function taken DataFrame and convert it in bdf format according to config yaml
+     """
+    filename = f'{table_name}.bdf'
+    _bdf_lst = list(CONFIG['DATA_BASE'][table_name]['file_type']['bdf'].keys())
+    # select column which are in DB
+    _db_col_lst = [_name for _name in _bdf_lst if _name in df.columns]
+    df_to_bdf = df[_db_col_lst]
+    #TODO: split df by element_type and remove empty columns
 
-def convert_to_bdf(df: pd.DataFrame, table_name) -> str:
-    filename = 'NamedTemporaryFile.bdf'
-
-    #TODO: create logic for filling columns which are not presented in database
-
-    # bdf_fields = CONFIG['DATA_BASE'][table_name]['file_type']['bdf']
-    # [df.insert(column) for column in bdf_fields if column in bdf_fields
-
-
-    print('create bdf file')
-    df_to_print = df[CONFIG['DATA_BASE'][table_name]['file_type']['bdf']]
-    df_to_print.insert(0, 'GRID', 'GRID')
-    df_to_print.to_csv(fr'media/{filename}', header=None, index=None, sep=",", mode='w')
-
+    # add columns which are not presented in DB
+    [df_to_bdf.insert(idx, _name, CONFIG['DATA_BASE'][table_name]['file_type']['bdf'][_name])
+     for idx, _name in enumerate(_bdf_lst) if _name not in _db_col_lst]
+    # save to bdf file
+    print(df_to_bdf)
+    type_column = [_name for _name in df_to_bdf.columns if _name.endswith('_type')]
+    with open(fr'media/{filename}', 'w') as csv_file:
+        csv_file.write(f'#file created at {datetime.datetime.now()} \n')
+    if len(type_column) > 0:
+        for _type, df_to_bdf_group in df_to_bdf.groupby(type_column[0]):
+            df_to_bdf_group.dropna(axis=1, how='all', inplace=True)
+            for drop_col in df_to_bdf_group.columns:
+                df_to_bdf_group[drop_col] = df_to_bdf_group[drop_col].astype(str).apply(lambda x: re.sub(r'\.0$', '', x))
+            df_to_bdf_group.to_csv(fr'media/{filename}', header=None, index=None, sep=",", mode='a')
+    else:
+        df_to_bdf.to_csv(fr'media/{filename}', header=None, index=None, sep=",", mode='a')
     return filename
 
 
 @error_function
-def convert_to_xlsx(json_data: dict, easy_format=False) -> (QuerySet[Upload], pd.DataFrame.to_html):
-    with pd.ExcelWriter('media/NamedTemporaryFile.xlsx') as tmp:
-        # pd.DataFrame(json_data).to_excel('media/'+tmp.name)
-        # print(json_data)
-        df = pd.DataFrame(json_data)
-        # Check that reference fields are in the table to convert table view.
-        if 'position' in df.columns:
-            df_add = df.apply(lambda row: row.position['parameter'], axis=1).apply(pd.Series)
-            df = pd.concat([df, df_add], axis=1).drop('position', axis=1)
+def convert_to_xlsx(df: pd.DataFrame, table_name: str, easy_format: bool) -> str:
+    filename = f'{table_name}.xlsx'
+    with pd.ExcelWriter(f'media/{filename}') as tmp:
         df.dropna(axis=1, how='all', inplace=True)
         if False not in [field in df.columns for field in ['frame', 'stringer', 'side']] and not easy_format:
             for _key in df.columns:
@@ -70,12 +80,10 @@ def convert_to_xlsx(json_data: dict, easy_format=False) -> (QuerySet[Upload], pd
                         to_excel(excel_writer=tmp, sheet_name=_key)
         else:
             df.to_excel(excel_writer=tmp)
-    db_file = Upload.objects.create(upload='NamedTemporaryFile.xlsx')
-    excel_file = Upload.objects.get(id=db_file.id)
-    return excel_file, df.to_html(justify='left')
+    return filename
 
 
-# @error_function
+@error_function
 def from_xls_to_dict(excel_file: object, ref_fields: bool, prm_dct=['all']) -> dict:
     """
    excel_file: Excel file with parameters in each sheet
@@ -100,13 +108,6 @@ def from_xls_to_dict(excel_file: object, ref_fields: bool, prm_dct=['all']) -> d
     return parameter_list
 
 
-def cs_analysis(dct: dict) -> dict:
-    # class_name = CONFIG['CALCULATION_TYPE']['CROSS-SECTION'][dct['table_name']]['Class_name']
-    class_name = dct.pop('table_name')
-    section = globals()[CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][class_name]['Class_name']](dct)
-    return [{'area': section.area, 'cog': section.cog, 'inertia': section.inertia}]
-
-
 def cs_converter(db_cs_lst: list) -> list:
     """
     db_cs_lst: cross-section parameters list ([{'side': 'LHS', 'stringer': 1, 'frame': 10, 'uid': '11010110', 'type':
@@ -116,14 +117,30 @@ def cs_converter(db_cs_lst: list) -> list:
     sections = []
     for item in db_cs_lst:
         section_config = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][item['section_type']]
-        dct = {k: float(item.pop(k)) for k in list(item.keys()) if k in section_config['Parameters'] or
-               k in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']}
+        if db_cs_lst[0]['section_type'] == 'FEM-Polygon':
+            _points_number = int(db_cs_lst[0].pop('points'))
+            dct = [(db_cs_lst[0].pop(f'x_{idx}'), db_cs_lst[0].pop(f'y_{idx}')) for idx in range(_points_number)]
+        else:
+            dct = {k: float(item.pop(k)) for k in list(item.keys()) if k in section_config['Parameters'] or
+                   k in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']}
 
-        #TODO: update div_x, y, z in line with business logic
-        for arg in ('div_x', 'div_y'):
-            dct[arg] = 0
-        item.update(globals()[section_config['Class_name']](dct).output)
+            #TODO: update div_x, y, z in line with business logic
+            for arg in ('div_x', 'div_y'):
+                dct[arg] = 0
+        print(dct)
+        section = globals()[section_config['Class_name']](dct)
+        item.update(section.output)
         sections.append(item)
-    return sections
+    picture = None if len(db_cs_lst) > 1 else section.plot
+    return sections, picture
 
 
+def recur_unpack(lst: list, return_lst=None) -> list:
+    # prepare list with unpacked internal lists [[1,2,3],4,[[5,6],7]] --> [1,2,3,4,5,6,7]
+    return_lst = list() if not return_lst else return_lst
+    for _val in lst:
+        if type(_val) == list or type(_val) == tuple:
+            return_lst = recur_unpack(_val, return_lst)
+        else:
+            return_lst.append(_val)
+    return return_lst

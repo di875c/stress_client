@@ -1,4 +1,12 @@
 import numpy as np
+from sectionproperties.pre.geometry import Polygon
+from sectionproperties.pre.geometry import Geometry
+from sectionproperties.analysis.section import Section
+import base64
+from io import BytesIO
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle, Circle
+from matplotlib.collections import PatchCollection
 
 
 class BaseSquare:
@@ -39,7 +47,8 @@ class BaseSquare:
         mom_inertia_x  = _mom_inertia[0] + k * _area * (_div_y ** 2)
         mom_inertia_y = _mom_inertia[1] + k * _area * (_div_x ** 2)
         mom_inertia_xy = _mom_inertia[2] + k * _area * (_div_x * _div_y)
-        alpha = np.arctan(2 * mom_inertia_xy/(mom_inertia_x-mom_inertia_y)) / 2 if _cog else _alpha
+        alpha = np.arctan(2 * mom_inertia_xy/(mom_inertia_x-mom_inertia_y + mom_inertia_y/1e6)) / 2 \
+            if _cog else _alpha
         mom_inertia_max = mom_inertia_x * (np.cos(k*alpha)**2) + mom_inertia_y * (np.sin(k*alpha)**2) \
                          - mom_inertia_xy * np.sin(k*alpha*2)
         mom_inertia_min = mom_inertia_x * (np.sin(k*alpha)**2) + mom_inertia_y * (np.cos(k*alpha)**2) \
@@ -52,6 +61,9 @@ class BaseSquare:
     def output(self):
         return dict(zip(('area', 'cog', 'inertia'), (self.area, self.cog, self.inertia)))
 
+    @property
+    def pre_plot(self):
+        return Rectangle((self.div_x, self.div_y), self.x, self.y, self.alpha, linewidth=2, edgecolor='r', facecolor='none')
 
 class BaseSegment:
     def __init__(self, radius, seg_angle, div_x, div_y, alpha):
@@ -105,6 +117,27 @@ class AnySections:
         output_dct.update(self.inertia)
         return output_dct
 
+    @property
+    def plot(self):
+        #TODO create plot method
+        path = PatchCollection([i.pre_plot for i in self.squares])
+        path.set(linewidth=2, edgecolor='k', alpha=0.3)
+        fig, ax = plt.subplots()
+        ax.add_collection(path)
+        ax.scatter(*self.cog, c="r", marker="x", s=100, label="Center of gravity")
+        ax.axline(self.cog, slope=np.tan(self.inertia['alpha']), color="black", linestyle="--")
+        rotate = self.inertia['alpha'] + 1.5708
+        ax.axline(self.cog, slope=np.tan(self.inertia['alpha']+1.5708), color="black", linestyle="--")
+        ax.autoscale()
+        ax.set_aspect('equal',  adjustable='box')
+        ax.legend(loc="lower left", bbox_to_anchor=(0, 1))
+        image = BytesIO()
+        fig.savefig(image, format='png')
+        image.seek(0)
+        decode = base64.b64encode(image.getvalue()).decode('utf8')
+        img_data = f"data:image/png;base64,{decode}"
+        return img_data
+
 
 class Square(AnySections):
     def __init__(self, *args, **kwargs):
@@ -148,3 +181,29 @@ class ISection(AnySections):
                                   (self.width_2 - self.th_2) / 2, self.div_y + self.th_3, self.alpha), # web
                                  (self.width_2, self.th_3, self.div_x, self.div_y, self.alpha)  # lower flange
                                  ])
+
+
+class FemPolygon:
+    def __init__(self, points_lst: list):
+        self.polygon = Polygon(points_lst)
+        self.geometry = Geometry(self.polygon)
+        self.geometry.create_mesh(mesh_sizes=[self.polygon.area/100])
+        self.section = Section(self.geometry)
+
+
+    @property
+    def output(self) -> dict:
+        test_property = self.section.calculate_frame_properties()
+        return dict(zip(('area', 'Ixx', 'Iyy', 'Ixy', 'J', 'phi'), test_property))
+
+    @property
+    def plot(self) -> dict:
+        self.section.calculate_geometric_properties()
+        figure = self.section.plot_centroids(render=False).get_figure()
+        image = BytesIO()
+        figure.savefig(image, format='png')
+
+        image.seek(0)
+        decode = base64.b64encode(image.getvalue()).decode('utf8')
+        img_data = f"data:image/png;base64,{decode}"
+        return img_data
