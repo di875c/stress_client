@@ -141,7 +141,6 @@ class AnySections:
 
 class Square(AnySections):
     def __init__(self, *args, **kwargs):
-        print('args: ', args, 'kwargs: ', kwargs)
         dct = kwargs if len(kwargs) > 0 else args[0]
         [setattr(self, attr, dct[attr]) for attr in dct]
         super().__init__(square=[(self.width, self.height, self.div_x, self.div_y, self.alpha)])
@@ -150,7 +149,7 @@ class Square(AnySections):
 class AngleSection(AnySections):
     # def __init__(self, height, width, th_1, th_2, div_x=0, div_y=0, alpha=0, dct={}):
     def __init__(self, *args, **kwargs):
-        print('args: ', args, 'kwargs: ', kwargs)
+        # print('args: ', args, 'kwargs: ', kwargs)
         dct = kwargs if len(kwargs) > 0 else args[0]
         [setattr(self, attr, dct[attr]) for attr in dct]
         super().__init__(square=[(self.th_1, self.height, self.div_x, self.div_y, self.alpha),
@@ -160,7 +159,6 @@ class AngleSection(AnySections):
 class CSection(AnySections):
     # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
     def __init__(self, *args, **kwargs):
-        print('args: ', args, 'kwargs: ', kwargs)
         dct = kwargs if len(kwargs) > 0 else args[0]
         [setattr(self, attr, dct[attr]) for attr in dct]
         super().__init__(square=[(self.width_1, self.th_1, self.div_x, self.div_y + self.height-self.th_1, self.alpha), # upper flange
@@ -172,13 +170,23 @@ class CSection(AnySections):
 class ISection(AnySections):
     # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
     def __init__(self, *args, **kwargs):
-        print('args: ', args, 'kwargs: ', kwargs)
         dct = kwargs if len(kwargs) > 0 else args[0]
         [setattr(self, attr, dct[attr]) for attr in dct]
         super().__init__(square=[(self.width_1, self.th_1, self.div_x + (self.width_2 - self.width_1) / 2, self.div_y +
                                   self.height-self.th_1, self.alpha), # upper flange
                                  (self.th_2, self.height - self.th_1 - self.th_3, self.div_x +
                                   (self.width_2 - self.th_2) / 2, self.div_y + self.th_3, self.alpha), # web
+                                 (self.width_2, self.th_3, self.div_x, self.div_y, self.alpha)  # lower flange
+                                 ])
+
+
+class ZSection(AnySections):
+    # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
+    def __init__(self, *args, **kwargs):
+        dct = kwargs if len(kwargs) > 0 else args[0]
+        [setattr(self, attr, dct[attr]) for attr in dct]
+        super().__init__(square=[(self.width_1, self.th_1, self.div_x + self.width_2 - self.th_2, self.div_y + self.height-self.th_1, self.alpha), # upper flange
+                                 (self.th_2, self.height - self.th_1 - self.th_3, self.div_x + self.width_2 - self.th_2, self.div_y + self.th_3, self.alpha), # web
                                  (self.width_2, self.th_3, self.div_x, self.div_y, self.alpha)  # lower flange
                                  ])
 

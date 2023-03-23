@@ -32,10 +32,10 @@
                 {% if data.subtasks %}
                     <hr>
                          {% for task in data.subtasks %}
-                            <li><a class="dropdown-item" href="/gfem/{{ task.url_added }}">{{ task.name }}</a></li>
+                            <li><a class="dropdown-item" href="/{{ task.url_added }}">{{ task.name }}</a></li>
                          {% endfor %}
                 {% else %}
-                <li><a class="dropdown-item" href="/gfem/{{ data.url_added }}">{{ data.name }}</a></li>
+                <li><a class="dropdown-item" href="/{{ data.url_added }}">{{ data.name }}</a></li>
                 {% endif%}
                 {% endfor %}
             </ul>

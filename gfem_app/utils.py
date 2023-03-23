@@ -1,14 +1,14 @@
-import datetime
-import re
+import datetime, re, yaml
 import pandas as pd
 from .model import Upload
 from django.db.models.query import QuerySet
-# import numpy as np
-from .stress.cs_utils import *
 from stress_client.settings import CONFIG
 
 
 def error_function(func):
+    '''
+    wrapper to return errors for future rendering
+    '''
     def _wrapper(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
@@ -19,13 +19,35 @@ def error_function(func):
     return _wrapper
 
 
+def csv_reader_decarate(func):
+    '''
+    wrapper to read data frame from csv file
+    '''
+    def _wrapper(*args, **kwargs):
+        # print('args: ', args, 'kwargs: ', kwargs)
+        if args[0]._name.endswith('xlsx'):
+            result = func(*args, **kwargs)
+            return result
+        elif args[0]._name.endswith('csv'):
+            json = pd.read_csv(args[0]).to_dict('records')
+            # print(json)
+            return json
+    return _wrapper
+
+
 # @error_function
 def convert_from_db(json_data: dict, file_format: str, table_name: str, easy_format=False) -> (QuerySet[Upload], pd.DataFrame.to_html):
-    # print(json_data)
+    '''
+    convert json from
+    '''
     df = pd.DataFrame(data=json_data)
-    if 'position' in df.columns:
-        df_add = df.apply(lambda row: row.position['parameter'], axis=1).apply(pd.Series)
-        df = pd.concat([df, df_add], axis=1).drop('position', axis=1)
+    print(df)
+    try:
+        if 'position' in df.columns:
+            df_add = df.apply(lambda row: row.position['parameter'], axis=1).apply(pd.Series)
+            df = pd.concat([df, df_add], axis=1).drop('position', axis=1)
+    except:
+        easy_format = True
     if file_format == 'excel':
         filename = convert_to_xlsx(df, table_name, easy_format)
     elif file_format == 'bdf':
@@ -37,39 +59,44 @@ def convert_from_db(json_data: dict, file_format: str, table_name: str, easy_for
     return file_out, df.to_html(justify='left')
 
 
-# @error_function
 def convert_to_bdf(df: pd.DataFrame, table_name: str) -> str:
-    """
-     function taken DataFrame and convert it in bdf format according to config yaml
-     """
+    '''
+    write Data Frame to bdf file file
+    return path to bdf file
+    '''
     filename = f'{table_name}.bdf'
-    _bdf_lst = list(CONFIG['DATA_BASE'][table_name]['file_type']['bdf'].keys())
-    # select column which are in DB
-    _db_col_lst = [_name for _name in _bdf_lst if _name in df.columns]
-    df_to_bdf = df[_db_col_lst]
-    #TODO: split df by element_type and remove empty columns
-
-    # add columns which are not presented in DB
-    [df_to_bdf.insert(idx, _name, CONFIG['DATA_BASE'][table_name]['file_type']['bdf'][_name])
-     for idx, _name in enumerate(_bdf_lst) if _name not in _db_col_lst]
-    # save to bdf file
-    print(df_to_bdf)
-    type_column = [_name for _name in df_to_bdf.columns if _name.endswith('_type')]
+    df_to_bdf = df
+    with open('./gfem_app/stress/card_config.yaml', encoding='utf-8') as f:
+        card_config = yaml.safe_load(f)
+    # print(card_config)
+    type_column = [_name for _name in df_to_bdf.columns if _name.endswith('type')]
     with open(fr'media/{filename}', 'w') as csv_file:
-        csv_file.write(f'#file created at {datetime.datetime.now()} \n')
+        csv_file.write(f'$file created on {datetime.datetime.now()} \n')
     if len(type_column) > 0:
-        for _type, df_to_bdf_group in df_to_bdf.groupby(type_column[0]):
+        for _type, df_to_bdf_group in df_to_bdf.groupby('type'):
+            with open(fr'media/{filename}', 'a') as card_file:
+                card_file.write(card_config[_type][0])
             df_to_bdf_group.dropna(axis=1, how='all', inplace=True)
-            for drop_col in df_to_bdf_group.columns:
-                df_to_bdf_group[drop_col] = df_to_bdf_group[drop_col].astype(str).apply(lambda x: re.sub(r'\.0$', '', x))
-            df_to_bdf_group.to_csv(fr'media/{filename}', header=None, index=None, sep=",", mode='a')
-    else:
-        df_to_bdf.to_csv(fr'media/{filename}', header=None, index=None, sep=",", mode='a')
+            complex_columns = CONFIG['DATA_BASE'][table_name]['file_type']['bdf']
+            if complex_columns:
+                for column in complex_columns:
+                    if column in df_to_bdf_group.columns:
+                        idx = 's' if 'start' in column else 'e'
+                        df_add = df_to_bdf_group.apply(lambda row: row[column]['parameter'], axis=1).apply(pd.Series)
+                        df_add = df_add.rename(columns=lambda x: x + '_' + idx)
+                        df_to_bdf_group = pd.concat([df_to_bdf_group, df_add], axis=1).drop(column, axis=1)
+            with open(fr'media/{filename}', 'a') as card_file:
+                [card_file.write(card_config[_type][1].format(dct=row)) for _, row in df_to_bdf_group.iterrows()]
     return filename
+
 
 
 @error_function
 def convert_to_xlsx(df: pd.DataFrame, table_name: str, easy_format: bool) -> str:
+    '''
+    write Data Frame to excel file (2 options: pivot tables stringer+side vs frames or simple list format in one sheet)
+    return path to excel file
+    '''
     filename = f'{table_name}.xlsx'
     with pd.ExcelWriter(f'media/{filename}') as tmp:
         df.dropna(axis=1, how='all', inplace=True)
@@ -84,6 +111,7 @@ def convert_to_xlsx(df: pd.DataFrame, table_name: str, easy_format: bool) -> str
 
 
 @error_function
+@csv_reader_decarate
 def from_xls_to_dict(excel_file: object, ref_fields: bool, prm_dct=['all']) -> dict:
     """
    excel_file: Excel file with parameters in each sheet
@@ -102,37 +130,14 @@ def from_xls_to_dict(excel_file: object, ref_fields: bool, prm_dct=['all']) -> d
         if column.notnull().any():
             for ref2, data in column.items():
                 temp_dict = dict(zip(["side", "stringer", "frame"], [*ref2] + [ref1])) if ref_fields else dict()
-                temp_dict.update({name: str(df[name][ref1][ref2]) for name in prm_lst if pd.notna(df[name][ref1][ref2])})
-                parameter_list.append(temp_dict)
-    # print(parameter_list)
+                temp_dict.update({name: re.sub(r'\.0$', '', str(df[name][ref1][ref2]))
+                                  for name in prm_lst if pd.notna(df[name][ref1][ref2])})
+                if list(temp_dict.keys()) == ["side", "stringer", "frame"] or list(temp_dict.keys()) == []:
+                    pass
+                else:
+                    parameter_list.append(temp_dict)
+    print(parameter_list)
     return parameter_list
-
-
-def cs_converter(db_cs_lst: list) -> list:
-    """
-    db_cs_lst: cross-section parameters list ([{'side': 'LHS', 'stringer': 1, 'frame': 10, 'uid': '11010110', 'type':
-    'Stringer', 'section_type': 'L-Section', 'height': '40', 'th_1': '4.2', 'width': '30', 'th_2': '2.5', 'alpha':
-    '0', 'coord_x': '150', 'coord_y': '45', 'coord_z': '55.1', 'comment': 'Stringer test'},])
-    """
-    sections = []
-    for item in db_cs_lst:
-        section_config = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][item['section_type']]
-        if db_cs_lst[0]['section_type'] == 'FEM-Polygon':
-            _points_number = int(db_cs_lst[0].pop('points'))
-            dct = [(db_cs_lst[0].pop(f'x_{idx}'), db_cs_lst[0].pop(f'y_{idx}')) for idx in range(_points_number)]
-        else:
-            dct = {k: float(item.pop(k)) for k in list(item.keys()) if k in section_config['Parameters'] or
-                   k in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']}
-
-            #TODO: update div_x, y, z in line with business logic
-            for arg in ('div_x', 'div_y'):
-                dct[arg] = 0
-        print(dct)
-        section = globals()[section_config['Class_name']](dct)
-        item.update(section.output)
-        sections.append(item)
-    picture = None if len(db_cs_lst) > 1 else section.plot
-    return sections, picture
 
 
 def recur_unpack(lst: list, return_lst=None) -> list:

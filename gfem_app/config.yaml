@@ -27,17 +27,11 @@ DATA_BASE:
         excel:
           fr_str_format
         bdf:
-          GRID: GRID
-          uid:
-          CID: ''
-          coord_x:
-          coord_y:
-          coord_z:
     Element:
       name_db: ElementSchema
       fields:
         - uid
-        - element_type
+        - element_ref
         - frame
         - stringer
         - side
@@ -48,15 +42,6 @@ DATA_BASE:
         excel:
           fr_str_format
         bdf:
-          element_type:
-          uid:
-          property_id:
-          node_1:
-          node_2:
-          node_3:
-          node_4:
-          offset_1:
-          offset_2:
     Mass:
       name_db: MassSchema
       fields:
@@ -79,6 +64,7 @@ DATA_BASE:
       name_db: MaterialSchema
       fields:
         - uid
+        - type
         - density
         - eu
         - nu
@@ -87,10 +73,6 @@ DATA_BASE:
         excel:
           fr_str_format
         bdf:
-          - uid
-          - coord_x
-          - coord_y
-          - coord_z
     Sections:
       name_db: SectionSchema
       fields:
@@ -125,7 +107,7 @@ DATA_BASE:
       name_db: ElPropertySchema
       fields:
         - uid
-        - property_type
+        - type
         - material_id
         - shell_thick
         - section_start
@@ -135,24 +117,24 @@ DATA_BASE:
         excel:
           fr_str_format
         bdf:
-          - uid
-          - coord_x
-          - coord_y
-          - coord_z
+          - property_start
+          - property_end
 WORK_TYPE:
     - name: Внести данные
-      url_added: post_data
+      url_added: gfem/post_data
     - name: Получить данные
-      url_added: get_data
+      url_added: gfem/get_data
     - name: Внести изменения
-      url_added: update_data
+      url_added: gfem/update_data
     - name: Удалить данные
-      url_added: delete_data
+      url_added: gfem/delete_data
     - subtasks:
       - name: Расчет поперечных сечений
-        url_added: service_CS
+        url_added: stress-service/service_CS
+      - name: Создать карту id
+        url_added: stress-service/id-generate
       - name: Расчет нагрузок
-        url_added: added_tasks
+        url_added: stress-service/
 CALCULATION_TYPE:
   CROSS-SECTION:
     SECTION-TYPE:
@@ -183,6 +165,15 @@ CALCULATION_TYPE:
           - th_2
       C-Section:
         Class_name: CSection
+        Parameters:
+          - width_1
+          - height
+          - width_2
+          - th_1
+          - th_2
+          - th_3
+      Z-Section:
+        Class_name: ZSection
         Parameters:
           - width_1
           - height

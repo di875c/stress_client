@@ -6,7 +6,7 @@ from stress_client.settings import SERVER, CONFIG
 import requests
 from json2html import *
 from .forms import *
-from .utils import convert_to_xlsx, from_xls_to_dict, cs_converter, convert_from_db, recur_unpack, pd
+from .utils import convert_to_xlsx, from_xls_to_dict, convert_from_db, recur_unpack
 
 
 def error_function(func):
@@ -24,14 +24,15 @@ def error_function(func):
 
 
 def simple_view(request, template, *args, **kwargs):
-    # if request.method == 'GET':
     param = kwargs if kwargs else {}
     param['catalogs'] = CONFIG['WORK_TYPE']
     return render(request, template, param)
 
 
-
 class BaseInteract(View):
+    '''
+    class with get, post, put and delete method for db interaction
+    '''
     http_method_names = ['get', 'post', 'put', 'delete']
 
     def dispatch(self, request, *args, **kwargs):
@@ -46,7 +47,7 @@ class BaseInteract(View):
     def get(self, request):
         parameters = {k: v for k, v in request.GET.dict().items() if v and k not in ('table_name', '_method',
                                                                                      'save_in_file', 'file_type')}
-        print(parameters)
+        # print(parameters)
         table_name = request.GET.dict()['table_name']
         file_format = request.GET.dict()['file_type'] if 'file_type' in request.GET.dict() else None
         url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
@@ -83,7 +84,8 @@ class BaseInteract(View):
             dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE'][table_name]['ref_fields'])
             print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
             parameters = {'table_name': CONFIG['DATA_BASE'][table_name]['name_db']}
-            response = requests.post(url, params=parameters, data=json.dumps({"parameters": dct}))  # , timeout=4)
+            response = requests.post(url, params=parameters, data=json.dumps({"parameters": dct}),
+                                     headers={'Content-Type': 'application/json'})  # , timeout=4)
         else:
             form = BaseDynamicForm(request.POST, {"dynamic_fields": parameters, 'validate': False})
             if not form.is_valid():
@@ -91,7 +93,7 @@ class BaseInteract(View):
             parameters['table_name'] = CONFIG['DATA_BASE'][table_name]['name_db']
             response = requests.post(url, params=parameters)
         # url = "https://46bda8ba-446a-4aa1-b765-00c57f94efe3.mock.pstmn.io" + '/db'
-        print(response.status_code, response.text)
+        # print(response.status_code, response.text)
         if response.status_code == 200:
             data = {'messages': f'Тестируем. {response.text}'}
             return JsonResponse(data)
@@ -103,7 +105,7 @@ class BaseInteract(View):
 
     @error_function
     def delete(self, request):
-        print(request.POST)
+        # print(request.POST)
         parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
         url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
         table_name = parameters.pop('table_name')
@@ -124,7 +126,7 @@ class BaseInteract(View):
             # print(parameters)
             response = requests.delete(url, params=parameters)
         # url = "https://46bda8ba-446a-4aa1-b765-00c57f94efe3.mock.pstmn.io" + '/db'
-        print(response.status_code, response.text)
+        # print(response.status_code, response.text)
         if response.status_code == 200:
             data = {'messages': f'Тестируем. {response.text}'}
             return JsonResponse(data)
@@ -136,11 +138,11 @@ class BaseInteract(View):
 
     @error_function
     def put(self, request):
-        print('Put request: ', request.POST)
+        # print('Put request: ', request.POST)
         parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
         url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
         table_name = parameters.pop('table_name')
-        print(parameters)
+        # print(parameters)
         if 'excel_selection' in parameters:
             dct = from_xls_to_dict(request.FILES['upload'], False)
             print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
@@ -156,7 +158,7 @@ class BaseInteract(View):
             # print(parameters)
             response = requests.put(url, params=parameters)
         # url = "https://46bda8ba-446a-4aa1-b765-00c57f94efe3.mock.pstmn.io" + '/db'
-        print(response.status_code, response.text)
+        # print(response.status_code, response.text)
         if response.status_code == 200:
             data = {'messages': f'Тестируем. {response.text}'}
             return JsonResponse(data)
@@ -167,17 +169,18 @@ class BaseInteract(View):
             return JsonResponse({'error': 'Server return status not 200'}, status=404)
 
 
-class FileSaveInteract(View):
-    def get(self, request, template):
-        file_url = request.GET['file'] if request.GET['file'] else '#'
-        return render(request, template, {'file_url': file_url})
-
-    def post(self, request, template):
-        print('ja tut POST', request.POST)
-        return render(request, template)
+def file_save_view(request, template, *args, **kwargs):
+    '''
+    file save view for ajax request (button with download file)
+    '''
+    file_url = request.GET['file'] if request.GET['file'] else '#'
+    return render(request, template, {'file_url': file_url})
 
 
 def ajax_get_fields(request, *args, **kwargs):
+    '''
+    ajax rendering view for additional fields which depends on selected table or another input options
+    '''
     param = request.GET.dict()
     table_name = param.pop('table_name')
     if 'excel_selection' not in param:
@@ -198,32 +201,3 @@ def ajax_get_fields(request, *args, **kwargs):
     if 'save_in_file' in param and param['save_in_file'] == 'on' and 'file_type' in CONFIG['DATA_BASE'][table_name]:
         param['save_file_form'] = CONFIG['DATA_BASE'][table_name]['file_type'].keys()
     return render(request, 'table_form.html', param)
-
-
-def cs_calculation(request, *args, **kwargs):
-    parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
-    print(parameters)
-    if 'excel_selection' in parameters:
-        if parameters['table_name'] == 'FEM-Polygon':
-            _dct = pd.read_csv(request.FILES['upload'], header=0).to_dict()
-            lst_dct = [{f'{_k}_{_in_k}': _in_v for _k, _v in _dct.items() for _in_k, _in_v in _v.items()}]
-            lst_dct[0]['points'] = len(lst_dct[0])/2
-            lst_dct[0]['section_type'] = parameters['table_name']
-            print(lst_dct)
-        else:
-            lst_dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE']['Sections']['ref_fields'])
-        sections, picture = cs_converter(lst_dct)
-    else:
-        dct = {k: float(v) for k, v in parameters.items() if k not in ('table_name', 'excel_selection')}
-        dct['section_type'] = parameters['table_name']
-        print(dct)
-        sections, picture = cs_converter([dct])
-    # print(picture)
-    # section = cs_analysis(dct)
-    excel_file, html_table = convert_from_db(sections, 'excel', parameters['table_name'], True)
-    data = {'message': 'тестируем', 'html': html_table,
-            "load_to_file": f"file_save?file={excel_file.upload.url}",
-            'picture': picture
-            }
-    print('template rendering started')
-    return JsonResponse(data, status=200)

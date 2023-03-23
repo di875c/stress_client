@@ -14,15 +14,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
-from django.conf.urls.static import static
-from stress_client import settings
+from django.urls import path
+from gfem_app.views import simple_view
+from .views import *
+from django.views.decorators.csrf import csrf_exempt
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('stress-service/', include('stress_service.urls')),
-    path('', include('gfem_app.urls')),
+    path('id-generate/', simple_view, {'template': 'id_generate.html'}),
+    path(r'ajax/generator-id', csrf_exempt(id_generate_view), name='generator-ID'),
+    path('service_CS/', simple_view, {'template': 'calculate_page.html', 'models': CONFIG['CALCULATION_TYPE']
+                                      ['CROSS-SECTION']['SECTION-TYPE'].keys()}),
+    path(r'ajax/CS-calculation/', csrf_exempt(cs_calculation_view), name='calculate_CS'),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

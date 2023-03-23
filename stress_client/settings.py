@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'gfem_app',
+    'stress_service',
 ]
 
 MIDDLEWARE = [
