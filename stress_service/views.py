@@ -14,11 +14,10 @@ def id_generate_view(request, *args, **kwargs):
     view to write excel file with unique id mapping and sheet with list of parameters (for future post in
     db through csv format) from excel with pivot tables
     '''
-    param = kwargs if kwargs else {}
-    param['catalogs'] = CONFIG['WORK_TYPE']
-    uid_offset = int(request.POST['id_offset']) if 'id_offset' in request.POST.dict() else 0
+    parameters = {k: v for k, v in request.POST.dict().items() if v}
+    uid_offset = int(parameters.get('id_offset', 0))
     excel_file = uid_generate(request.FILES['upload'], uid_offset)
-    data = {'message': 'ID и карта созданы, загрузите файл',
+    data = {'messages': 'ID и карта созданы, загрузите файл',
             "load_to_file": f"file_save?file={excel_file.upload.url}"}
     return JsonResponse(data=data, status=200)
 
@@ -48,7 +47,7 @@ def cs_calculation_view(request, *args, **kwargs):
     # print(picture)
     easy_format = False if 'side' and 'stringer' and 'frame' in sections[0] else True
     excel_file, html_table = convert_from_db(sections, 'excel', parameters['table_name'], easy_format=easy_format)
-    data = {'message': 'тестируем', 'html': html_table,
+    data = {'messages': 'Расчет выполнен', 'html': html_table,
             "load_to_file": f"file_save?file={excel_file.upload.url}",
             'picture': picture
             }

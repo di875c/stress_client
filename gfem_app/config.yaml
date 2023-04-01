@@ -5,7 +5,7 @@ DATA_BASE:
         - None
       ref_fields: False
     Structure:
-      name_db: StructureSchema
+      name_db: Structure
       fields:
         - uid
         - struct_type
@@ -13,7 +13,7 @@ DATA_BASE:
         - side
       ref_fields: False
     Node:
-      name_db: NodeSchema
+      name_db: Node
       fields:
         - uid
         - frame
@@ -23,12 +23,13 @@ DATA_BASE:
         - coord_y
         - coord_z
       ref_fields: True
+      template: node_template.xlsx
       file_type:
         excel:
           fr_str_format
         bdf:
     Element:
-      name_db: ElementSchema
+      name_db: Element
       fields:
         - uid
         - element_ref
@@ -38,12 +39,13 @@ DATA_BASE:
         - nodes
         - property_id
       ref_fields: False
+      template: element_template.xlsx
       file_type:
         excel:
           fr_str_format
         bdf:
     Mass:
-      name_db: MassSchema
+      name_db: Mass
       fields:
         - uid
         - name
@@ -61,7 +63,7 @@ DATA_BASE:
           - coord_y
           - coord_z
     Material:
-      name_db: MaterialSchema
+      name_db: Material
       fields:
         - uid
         - type
@@ -69,12 +71,13 @@ DATA_BASE:
         - eu
         - nu
       ref_fields: False
+      template: material_template.xlsx
       file_type:
         excel:
           fr_str_format
         bdf:
     Sections:
-      name_db: SectionSchema
+      name_db: Section
       fields:
         - uid
         - type
@@ -83,28 +86,30 @@ DATA_BASE:
         - stringer
         - side
       ref_fields: True
+      template: sections_template.xlsx
       file_type:
         excel:
           fr_str_format
     Section property:
-      name_db: SectionPropertySchema
+      name_db: SectionProperty
       fields:
         - uid
         - type
         - area
-        - inertia_xx
+        - inertia_zz
         - inertia_yy
-        - inertia_xy
+        - inertia_zy
         - inertia_torsion
         - alpha
         - inertia_min
         - inertia_max
       ref_fields: True
+      template: section_properties_template.xlsx
       file_type:
         excel:
           fr_str_format
     Element property:
-      name_db: ElPropertySchema
+      name_db: ElProperty
       fields:
         - uid
         - type
@@ -119,16 +124,28 @@ DATA_BASE:
         bdf:
           - property_start
           - property_end
+    Section property map:
+      name_db: SectionPropertyMap
+      fields:
+        - sec_prop_uid
+        - frame
+        - stringer
+        - side
+      ref_fields: True
+      file_type:
+        excel:
+          fr_str_format
 WORK_TYPE:
-    - name: Внести данные
-      url_added: gfem/post_data
-    - name: Получить данные
-      url_added: gfem/get_data
-    - name: Внести изменения
-      url_added: gfem/update_data
-    - name: Удалить данные
-      url_added: gfem/delete_data
-    - subtasks:
+    data_base:
+      - name: Внести данные
+        url_added: gfem/post_data
+      - name: Получить данные
+        url_added: gfem/get_data
+      - name: Внести изменения
+        url_added: gfem/update_data
+      - name: Удалить данные
+        url_added: gfem/delete_data
+    services:
       - name: Расчет поперечных сечений
         url_added: stress-service/service_CS
       - name: Создать карту id
@@ -146,7 +163,7 @@ CALCULATION_TYPE:
         Class_name: Square
         Parameters:
           - height
-          - width
+          - width_1
       I-Section:
         Class_name: ISection
         Parameters:
@@ -159,7 +176,7 @@ CALCULATION_TYPE:
       L-Section:
         Class_name: AngleSection
         Parameters:
-          - width
+          - width_1
           - height
           - th_1
           - th_2
@@ -184,10 +201,10 @@ CALCULATION_TYPE:
       FEM-Polygon:
         Class_name: FemPolygon
         Parameters:
-          - x
           - y
+          - z
     STANDARD-PART:
       Parameters:
-        - div_x
         - div_y
+        - div_z
         - alpha

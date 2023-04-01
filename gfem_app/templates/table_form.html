@@ -1,4 +1,18 @@
+{% load static %}
+
+{% if template %}
+<div class="m-3">
+    <a href="{% static '' %}files/{{template}}"><img src="{% static 'img/icons-excel.png' %}">Посмотреть шаблон для заполнения</a>
+</div>
+<hr>
+{% endif %}
+{% if form.upload %}
+<p>Выберите файл из которого зачитаются данные</p>
+{% else %}
+<p>Заполните поля таблицы</p>
+{% endif %}
 <table>
+
 {{ form }}
 </table>
 <hr>

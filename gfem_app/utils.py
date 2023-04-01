@@ -1,8 +1,19 @@
 import datetime, re, yaml
+import time
+
 import pandas as pd
 from .model import Upload
 from django.db.models.query import QuerySet
 from stress_client.settings import CONFIG
+
+
+def time_decorate(func):
+    def _wrapper(*args, **kwargs):
+        _time_start = time.time()
+        result = func(*args, **kwargs)
+        print("function {} time  = {:.10f}".format(func.__name__, time.time() - _time_start))
+        return result
+    return _wrapper
 
 
 def error_function(func):
@@ -35,13 +46,31 @@ def csv_reader_decarate(func):
     return _wrapper
 
 
+@time_decorate
+def extract_from_list(base_data, name='positions', replace_name='position'):
+    json_data = list()
+    for _idx, _item in enumerate(base_data):
+        if type(_item[name]) == list:
+            _cur_item = base_data[_idx].copy()
+            _cur_item.pop(name)
+            for pos in _item[name]:
+                _item_dct = {replace_name: pos}
+                _item_dct.update(_cur_item)
+                json_data.append(_item_dct)
+        else:
+            json_data.append(_item)
+    return json_data
+
+@time_decorate
 # @error_function
 def convert_from_db(json_data: dict, file_format: str, table_name: str, easy_format=False) -> (QuerySet[Upload], pd.DataFrame.to_html):
     '''
     convert json from
     '''
+
+    if json_data and 'positions' in json_data[0]:
+        json_data = extract_from_list(json_data, name='positions')
     df = pd.DataFrame(data=json_data)
-    print(df)
     try:
         if 'position' in df.columns:
             df_add = df.apply(lambda row: row.position['parameter'], axis=1).apply(pd.Series)
@@ -53,10 +82,12 @@ def convert_from_db(json_data: dict, file_format: str, table_name: str, easy_for
     elif file_format == 'bdf':
         filename = convert_to_bdf(df, table_name)
     else:
-        return None, df.to_html(justify='left')
+        return None, df.to_html(justify='left', classes="table table-striped", max_rows=10)
     db_file = Upload.objects.create(upload=filename)
     file_out = Upload.objects.get(id=db_file.id)
-    return file_out, df.to_html(justify='left')
+    # with pd.option_context('display.max_colwidth', -1)df.set_table_attributes('class="table-style"').to_html():
+    output_html = df.to_html(justify='left', classes="table table-striped", max_rows=10)
+    return file_out, output_html
 
 
 def convert_to_bdf(df: pd.DataFrame, table_name: str) -> str:
@@ -100,6 +131,7 @@ def convert_to_xlsx(df: pd.DataFrame, table_name: str, easy_format: bool) -> str
     filename = f'{table_name}.xlsx'
     with pd.ExcelWriter(f'media/{filename}') as tmp:
         df.dropna(axis=1, how='all', inplace=True)
+        # print(df)
         if False not in [field in df.columns for field in ['frame', 'stringer', 'side']] and not easy_format:
             for _key in df.columns:
                 if _key not in ['frame', 'stringer', 'side']:
@@ -136,7 +168,7 @@ def from_xls_to_dict(excel_file: object, ref_fields: bool, prm_dct=['all']) -> d
                     pass
                 else:
                     parameter_list.append(temp_dict)
-    print(parameter_list)
+    # print(parameter_list)
     return parameter_list
 
 

@@ -21,8 +21,8 @@ CHEAR:
 PBEAM:
   - "$\n$PBEAM, Property ID, material ID, Area (A), I1(A), I2(A), J(A), NSM(A)\n$
   ,SO(stress output), X/X(B) (distance from A), Area(B), I1(B), I2(A), J(A), NSM(A)\n$\n"
-  - "PBEAM,{dct[uid]},{dct[material_id]},{dct[area_s]},{dct[inertia_xx_s]},{dct[inertia_yy_s]},{dct[inertia_xy_s]},{dct[inertia_torsion_s]},,\n
-  ,NO,1.0,{dct[area_e]},{dct[inertia_xx_e]},{dct[inertia_yy_e]},{dct[inertia_xy_e]},{dct[inertia_torsion_e]},\n"
+  - "PBEAM,{dct[uid]},{dct[material_id]},{dct[area_s]},{dct[inertia_zz_s]},{dct[inertia_yy_s]},{dct[inertia_zy_s]},{dct[inertia_torsion_s]},,\n
+  ,NO,1.0,{dct[area_e]},{dct[inertia_zz_e]},{dct[inertia_yy_e]},{dct[inertia_zy_e]},{dct[inertia_torsion_e]},\n"
 PROD:
   - "$\n$PROD, property ID, material ID, Area, J, C, NSM\n$\n"
   - "PROD,{dct[uid]},{dct[material_id]},{dct[area_s]}, {dct[inertia_torsion_s]}, ,\n"

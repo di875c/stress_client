@@ -34,7 +34,7 @@ def uid_generate(file: object, uid=100) -> QuerySet[Upload]:
             pd.DataFrame.from_dict(unique_lst).to_excel(excel_writer=writer, sheet_name='data')
         db_file = Upload.objects.create(upload=filename)
         file_out = Upload.objects.get(id=db_file.id)
-        return file_out
+    return file_out
 
 
 def cs_converter(db_cs_lst: list) -> list:
@@ -48,14 +48,15 @@ def cs_converter(db_cs_lst: list) -> list:
         section_config = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][item['type']]
         if db_cs_lst[0]['type'] == 'FEM-Polygon':
             _points_number = int(db_cs_lst[0].pop('points'))
-            dct = [(db_cs_lst[0].pop(f'x_{idx}'), db_cs_lst[0].pop(f'y_{idx}')) for idx in range(_points_number)]
+            dct = [(db_cs_lst[0].pop(f'y_{idx}'), db_cs_lst[0].pop(f'z_{idx}')) for idx in range(_points_number)]
         else:
             dct = {k: float(item.pop(k)) for k in list(item.keys()) if k in section_config['Parameters'] or
                    k in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']}
+            print(dct)
 
-            #TODO: update div_x, y, z in line with business logic
-            for arg in ('div_x', 'div_y'):
-                dct[arg] = 0
+            # TODO: update div_x, y, z in line with business logic
+            # for arg in ('div_x', 'div_y'):
+            #     dct[arg] = 0
         # print(dct)
         section = globals()[section_config['Class_name']](dct)
         item.update(section.output)

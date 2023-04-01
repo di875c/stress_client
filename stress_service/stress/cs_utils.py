@@ -26,36 +26,45 @@ class BaseSquare:
         self.div_y = div_y
         self.alpha = alpha
 
-
-
     @property
     def cog(self):
-        # TODO: alpha for whole section is not incorporated. It is only for dummy now.
-        return self.x/2 + self.div_x, self.y/2 + self.div_y
-        # x, y = self.x / 2 + self.div_x, self.y / 2 + self.div_y
-        # return x * np.cos(self.alpha) - y * np.sin(self.alpha), x * np.sin(self.alpha) + y * np.cos(self.alpha)
+        return (self.x * np.cos(self.alpha) - self.y * np.sin(self.alpha)) / 2 + self.div_x, \
+            (self.x * np.sin(self.alpha) + self.y * np.cos(self.alpha)) / 2 + self.div_y
 
     @property
     def inertia(self):
-        return self.x * (self.y**3) / 12 + self.area * self.cog[1]**2, \
-               self.y * (self.x**3) / 12 + self.area * self.cog[0]**2, self.area * self.cog[0] * self.cog[1]
+        # self inertia property Ix, Iy, Ixy, J regards origin and in global CS
+        _a, _b = min(self.x, self.y), max(self.x, self.y)
+        _x = _b / _a
+        _coeff = 0.32 if _x > 10 else -0.000148*_x**4 + 0.0039*_x**3 - 0.0376*_x**2 + 0.1635*_x + 0.0152
+        _inertia_x = self.x * (self.y**3) / 12
+        _inertia_y = self.y * (self.x**3) / 12
+        # rotate axis in global CS
+        lst = self.inertia_axis(area=self.area, mom_inertia=(_inertia_x, _inertia_y, 0),
+                                div_x=0, div_y=0, cog=False, angle_rotate=-self.alpha)
+        # recalculate property regarding origin point (0, 0)
+        lst = self.inertia_axis(area=self.area, mom_inertia=lst[-3:],
+                                div_x=self.cog[0], div_y=self.cog[1], cog=False, angle_rotate=0)
+        inertia_x, inertia_y, inertia_xy = lst[-3:]
+        return inertia_x, inertia_y, inertia_xy, _coeff * _b * _a ** 3
+
 
     @staticmethod
-    def inertia_axis(_area=0, _mom_inertia=[], _div_x=0, _div_y=0, _cog=False, _alpha=0):
+    def inertia_axis(area=0, mom_inertia=[], div_x=0, div_y=0, cog=False, angle_rotate=0):
         #recalculation moment of inertia in another axis
-        k = -1 if _cog else 1
-        mom_inertia_x  = _mom_inertia[0] + k * _area * (_div_y ** 2)
-        mom_inertia_y = _mom_inertia[1] + k * _area * (_div_x ** 2)
-        mom_inertia_xy = _mom_inertia[2] + k * _area * (_div_x * _div_y)
-        alpha = np.arctan(2 * mom_inertia_xy/(mom_inertia_x-mom_inertia_y + mom_inertia_y/1e6)) / 2 \
-            if _cog else _alpha
-        mom_inertia_max = mom_inertia_x * (np.cos(k*alpha)**2) + mom_inertia_y * (np.sin(k*alpha)**2) \
-                         - mom_inertia_xy * np.sin(k*alpha*2)
-        mom_inertia_min = mom_inertia_x * (np.sin(k*alpha)**2) + mom_inertia_y * (np.cos(k*alpha)**2) \
-                         + mom_inertia_xy * np.sin(k*alpha*2)
-        mom_inertia_0 = (mom_inertia_y - mom_inertia_x) * np.sin(alpha*2) / 2 \
-                         + mom_inertia_xy * (np.cos(alpha)**2 - np.sin(alpha)**2)
-        return mom_inertia_x, mom_inertia_y, mom_inertia_xy, alpha, mom_inertia_max, mom_inertia_min, mom_inertia_0
+        k = -1 if cog else 1
+        mom_inertia_x = mom_inertia[0] + k * area * (div_y ** 2)
+        mom_inertia_y = mom_inertia[1] + k * area * (div_x ** 2)
+        mom_inertia_xy = mom_inertia[2] + k * area * (div_x * div_y)
+        alpha = np.arctan(2 * mom_inertia_xy/(mom_inertia_x-mom_inertia_y + mom_inertia_y/1e12)) / 2 \
+            if cog else angle_rotate
+        inertia_1 = mom_inertia_x * (np.cos(k*alpha)**2) + mom_inertia_y * (np.sin(k*alpha)**2) - \
+                    mom_inertia_xy * np.sin(k*alpha*2)
+        inertia_2 = mom_inertia_x * (np.sin(k*alpha)**2) + mom_inertia_y * (np.cos(k*alpha)**2) + \
+                    mom_inertia_xy * np.sin(k*alpha*2)
+        inertia_12 = (mom_inertia_x - mom_inertia_y) * np.sin(k*alpha*2) / 2 + \
+                     mom_inertia_xy * np.cos(2*k*alpha)
+        return mom_inertia_x, mom_inertia_y, mom_inertia_xy, alpha, inertia_1, inertia_2, inertia_12
 
     @property
     def output(self):
@@ -63,9 +72,11 @@ class BaseSquare:
 
     @property
     def pre_plot(self):
-        return Rectangle((self.div_x, self.div_y), self.x, self.y, self.alpha, linewidth=2, edgecolor='r', facecolor='none')
+        return Rectangle((self.div_x, self.div_y), self.x, self.y, self.alpha * 180 / np.pi, linewidth=2, edgecolor='r',
+                         facecolor='none', rotation_point=(self.div_x, self.div_y))
 
 class BaseSegment:
+    # TODO: alpha for whole section is not incorporated. It is only for dummy now.
     def __init__(self, radius, seg_angle, div_x, div_y, alpha):
         self.radius = radius
         self.seg_angle = seg_angle / 2
@@ -85,10 +96,10 @@ class BaseSegment:
 
 
 class AnySections:
-    #TODO: alpha for whole section is not incorporated. It is only for dummy now.
     def __init__(self, *args, **kwargs):
         if 'square' in kwargs:
             self.squares = [BaseSquare(*_square) for _square in kwargs['square']]
+            self.alpha = kwargs['square'][0][-1]
 
     @property
     def area(self):
@@ -102,32 +113,34 @@ class AnySections:
     @property
     def inertia(self):
         _inertia_list = list(map(sum, zip(*[_square.inertia for _square in self.squares])))
-        # print(_inertia_list)
-        # sum(_square.inertia[_idx] for _square in self.squares) for _idx in range(3)) #Ix, Iy, Ixy
-        _inertia_list += BaseSquare.inertia_axis(_area=self.area,
-                                                 _mom_inertia=_inertia_list,
-                                                 _div_x=self.cog[0],
-                                                 _div_y=self.cog[1],
-                                                 _cog=True)
-        return dict(zip(('Ixx', 'Iyy', 'Ixy', 'Ixx_cog', 'Iyy_cog', 'Ixy_cog', 'alpha', 'Imax_princ', 'Imin_princ'), _inertia_list))
+        _inertia_list += BaseSquare.inertia_axis(area=self.area,
+                                                 mom_inertia=_inertia_list,
+                                                 div_x=self.cog[0],
+                                                 div_y=self.cog[1],
+                                                 cog=True,
+                                                 angle_rotate=0)
+        # change coordinate system from
+        # 'Ixx', 'Iyy', 'Ixy', 'J', 'Ixx_cog', 'Iyy_cog', 'Ixy_cog', 'alpha', 'Imax_princ', 'Imin_princ'
+        # to 'Iyy', 'Izz', 'Iyz', 'J', 'Iyy_cog', 'Izz_cog', 'Iyz_cog', 'alpha', 'Imax_princ', 'Imin_princ'
+        return dict(zip(('Iyy', 'Izz', 'Iyz', 'J', 'Iyy_cog', 'Izz_cog', 'Iyz_cog', 'alpha', 'Imain_1',
+                         'Imain_2', 'I0'), _inertia_list))
 
     @property
     def output(self):
-        output_dct = dict(zip(('area', 'cog_X', 'cog_Y'), (self.area, *self.cog)))
+        output_dct = dict(zip(('area', 'cog_Y', 'cog_Z'), (self.area, *self.cog)))
         output_dct.update(self.inertia)
         return output_dct
 
     @property
     def plot(self):
-        #TODO create plot method
         path = PatchCollection([i.pre_plot for i in self.squares])
         path.set(linewidth=2, edgecolor='k', alpha=0.3)
         fig, ax = plt.subplots()
         ax.add_collection(path)
         ax.scatter(*self.cog, c="r", marker="x", s=100, label="Center of gravity")
-        ax.axline(self.cog, slope=np.tan(self.inertia['alpha']), color="black", linestyle="--")
-        rotate = self.inertia['alpha'] + 1.5708
-        ax.axline(self.cog, slope=np.tan(self.inertia['alpha']+1.5708), color="black", linestyle="--")
+        axis_angle = - self.inertia['alpha'] #+ self.alpha
+        ax.axline(self.cog, slope=np.tan(axis_angle), color="black", linestyle="--")
+        ax.axline(self.cog, slope=np.tan(axis_angle + 1.5708), color="black", linestyle="--")
         ax.autoscale()
         ax.set_aspect('equal',  adjustable='box')
         ax.legend(loc="lower left", bbox_to_anchor=(0, 1))
@@ -138,29 +151,34 @@ class AnySections:
         img_data = f"data:image/png;base64,{decode}"
         return img_data
 
+    def self_prepare(self, *args, **kwargs):
+        dct = kwargs if len(kwargs) > 0 else args[0]
+        if 'div_z' in dct:
+            dct['div_x'], dct['div_y'] = dct['div_y'], dct['div_z']
+            dct['alpha'] = dct['alpha'] * np.pi / 180
+        [setattr(self, attr, dct[attr]) for attr in dct]
+
 
 class Square(AnySections):
     def __init__(self, *args, **kwargs):
-        dct = kwargs if len(kwargs) > 0 else args[0]
-        [setattr(self, attr, dct[attr]) for attr in dct]
-        super().__init__(square=[(self.width, self.height, self.div_x, self.div_y, self.alpha)])
+        self.self_prepare(*args, **kwargs)
+        super().__init__(square=[(self.width_1, self.height, self.div_x, self.div_y, self.alpha)])
 
 
 class AngleSection(AnySections):
     # def __init__(self, height, width, th_1, th_2, div_x=0, div_y=0, alpha=0, dct={}):
     def __init__(self, *args, **kwargs):
-        # print('args: ', args, 'kwargs: ', kwargs)
-        dct = kwargs if len(kwargs) > 0 else args[0]
-        [setattr(self, attr, dct[attr]) for attr in dct]
-        super().__init__(square=[(self.th_1, self.height, self.div_x, self.div_y, self.alpha),
-                                 (self.width - self.th_1, self.th_2, self.div_x + self.th_1, self.div_y, self.alpha)])
+        self.self_prepare(*args, **kwargs)
+        super().__init__(square=[(self.th_1, self.height, self.div_x, self.div_y, self.alpha), #vertical
+                                 (self.width_1 - self.th_1, self.th_2, self.div_x + self.th_1 * np.cos(self.alpha),
+                                  self.div_y + self.th_1 * np.sin(self.alpha), #horizontal
+                                  self.alpha)])
 
 
 class CSection(AnySections):
     # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
     def __init__(self, *args, **kwargs):
-        dct = kwargs if len(kwargs) > 0 else args[0]
-        [setattr(self, attr, dct[attr]) for attr in dct]
+        self.self_prepare(*args, **kwargs)
         super().__init__(square=[(self.width_1, self.th_1, self.div_x, self.div_y + self.height-self.th_1, self.alpha), # upper flange
                                  (self.th_2, self.height - self.th_1 - self.th_3, self.div_x, self.div_y + self.th_3, self.alpha), # web
                                  (self.width_2, self.th_3, self.div_x, self.div_y, self.alpha)  # lower flange
@@ -170,8 +188,7 @@ class CSection(AnySections):
 class ISection(AnySections):
     # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
     def __init__(self, *args, **kwargs):
-        dct = kwargs if len(kwargs) > 0 else args[0]
-        [setattr(self, attr, dct[attr]) for attr in dct]
+        self.self_prepare(*args, **kwargs)
         super().__init__(square=[(self.width_1, self.th_1, self.div_x + (self.width_2 - self.width_1) / 2, self.div_y +
                                   self.height-self.th_1, self.alpha), # upper flange
                                  (self.th_2, self.height - self.th_1 - self.th_3, self.div_x +
@@ -183,8 +200,7 @@ class ISection(AnySections):
 class ZSection(AnySections):
     # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
     def __init__(self, *args, **kwargs):
-        dct = kwargs if len(kwargs) > 0 else args[0]
-        [setattr(self, attr, dct[attr]) for attr in dct]
+        self.self_prepare(*args, **kwargs)
         super().__init__(square=[(self.width_1, self.th_1, self.div_x + self.width_2 - self.th_2, self.div_y + self.height-self.th_1, self.alpha), # upper flange
                                  (self.th_2, self.height - self.th_1 - self.th_3, self.div_x + self.width_2 - self.th_2, self.div_y + self.th_3, self.alpha), # web
                                  (self.width_2, self.th_3, self.div_x, self.div_y, self.alpha)  # lower flange
@@ -202,7 +218,7 @@ class FemPolygon:
     @property
     def output(self) -> dict:
         test_property = self.section.calculate_frame_properties()
-        return dict(zip(('area', 'Ixx', 'Iyy', 'Ixy', 'J', 'phi'), test_property))
+        return dict(zip(('area', 'Iyy', 'Izz', 'Iyz', 'J', 'phi'), test_property))
 
     @property
     def plot(self) -> dict:

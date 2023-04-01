@@ -49,7 +49,7 @@ class BaseInteract(View):
                                                                                      'save_in_file', 'file_type')}
         # print(parameters)
         table_name = request.GET.dict()['table_name']
-        file_format = request.GET.dict()['file_type'] if 'file_type' in request.GET.dict() else None
+        file_format = request.GET.dict().get('file_type')
         url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
         form = BaseDynamicForm(request.GET, {"dynamic_fields": parameters})
         # print(request.POST)
@@ -59,7 +59,6 @@ class BaseInteract(View):
         response = requests.get(url, params=parameters)  # , timeout=4)
         if response.status_code == 200:
             # print(response.json())
-            # excel_file, html_table = convert_to_xlsx(response.json()['parameters'])
             out_file, html_table = convert_from_db(json_data=response.json()['parameters'],
                                                    file_format=file_format,
                                                    table_name=table_name)
@@ -192,12 +191,13 @@ def ajax_get_fields(request, *args, **kwargs):
                            CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']
             if table_name == "FEM-Polygon":
                 number = int(param.pop('points'))
-                table_fields = [(f'x_{idx}', f'y_{idx}') for idx in range(number)]
+                table_fields = [(f'y_{idx}', f'z_{idx}') for idx in range(number)]
                 table_fields = recur_unpack(table_fields)
             param['form'] = BaseDynamicForm({"dynamic_fields": table_fields, "type_fields": 'float'}).as_table()
     elif param['excel_selection'] == 'on':
         param['excel_selection'] = True
         param['form'] = UploadForm
+        param['template'] = CONFIG['DATA_BASE'][table_name].get('template', None) if table_name in CONFIG['DATA_BASE'] else None
     if 'save_in_file' in param and param['save_in_file'] == 'on' and 'file_type' in CONFIG['DATA_BASE'][table_name]:
         param['save_file_form'] = CONFIG['DATA_BASE'][table_name]['file_type'].keys()
     return render(request, 'table_form.html', param)
