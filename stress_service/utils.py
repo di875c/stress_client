@@ -53,10 +53,6 @@ def cs_converter(db_cs_lst: list) -> list:
             dct = {k: float(item.pop(k)) for k in list(item.keys()) if k in section_config['Parameters'] or
                    k in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']}
             print(dct)
-
-            # TODO: update div_x, y, z in line with business logic
-            # for arg in ('div_x', 'div_y'):
-            #     dct[arg] = 0
         # print(dct)
         section = globals()[section_config['Class_name']](dct)
         item.update(section.output)

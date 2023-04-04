@@ -76,7 +76,6 @@ class BaseSquare:
                          facecolor='none', rotation_point=(self.div_x, self.div_y))
 
 class BaseSegment:
-    # TODO: alpha for whole section is not incorporated. It is only for dummy now.
     def __init__(self, radius, seg_angle, div_x, div_y, alpha):
         self.radius = radius
         self.seg_angle = seg_angle / 2
@@ -119,6 +118,7 @@ class AnySections:
                                                  div_y=self.cog[1],
                                                  cog=True,
                                                  angle_rotate=0)
+        _inertia_list[-4] = np.rad2deg(_inertia_list[-4])
         # change coordinate system from
         # 'Ixx', 'Iyy', 'Ixy', 'J', 'Ixx_cog', 'Iyy_cog', 'Ixy_cog', 'alpha', 'Imax_princ', 'Imin_princ'
         # to 'Iyy', 'Izz', 'Iyz', 'J', 'Iyy_cog', 'Izz_cog', 'Iyz_cog', 'alpha', 'Imax_princ', 'Imin_princ'
@@ -155,8 +155,12 @@ class AnySections:
         dct = kwargs if len(kwargs) > 0 else args[0]
         if 'div_z' in dct:
             dct['div_x'], dct['div_y'] = dct['div_y'], dct['div_z']
-            dct['alpha'] = dct['alpha'] * np.pi / 180
+            dct['alpha'] = np.radians(dct['alpha'])
         [setattr(self, attr, dct[attr]) for attr in dct]
+
+    @staticmethod
+    def div_rotate(div_x, div_y, x, y, alpha):
+        return div_x + x * np.cos(alpha) - y * np.sin(alpha), div_y + y * np.cos(alpha) + x * np.sin(alpha)
 
 
 class Square(AnySections):
@@ -179,8 +183,11 @@ class CSection(AnySections):
     # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
     def __init__(self, *args, **kwargs):
         self.self_prepare(*args, **kwargs)
-        super().__init__(square=[(self.width_1, self.th_1, self.div_x, self.div_y + self.height-self.th_1, self.alpha), # upper flange
-                                 (self.th_2, self.height - self.th_1 - self.th_3, self.div_x, self.div_y + self.th_3, self.alpha), # web
+        super().__init__(square=[(self.width_1, self.th_1,
+                                  *self.div_rotate(self.div_x, self.div_y, 0, self.height - self.th_1, self.alpha),
+                                  self.alpha), # upper flange
+                                 (self.th_2, self.height - self.th_1 - self.th_3,
+                                  *self.div_rotate(self.div_x, self.div_y, 0, self.th_3, self.alpha), self.alpha), # web
                                  (self.width_2, self.th_3, self.div_x, self.div_y, self.alpha)  # lower flange
                                  ])
 
@@ -189,10 +196,13 @@ class ISection(AnySections):
     # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
     def __init__(self, *args, **kwargs):
         self.self_prepare(*args, **kwargs)
-        super().__init__(square=[(self.width_1, self.th_1, self.div_x + (self.width_2 - self.width_1) / 2, self.div_y +
-                                  self.height-self.th_1, self.alpha), # upper flange
-                                 (self.th_2, self.height - self.th_1 - self.th_3, self.div_x +
-                                  (self.width_2 - self.th_2) / 2, self.div_y + self.th_3, self.alpha), # web
+        super().__init__(square=[(self.width_1, self.th_1,
+                                  *self.div_rotate(self.div_x, self.div_y, (self.width_2 - self.width_1) / 2,
+                                                  (self.height-self.th_1), self.alpha),
+                                  self.alpha), # upper flange
+                                 (self.th_2, self.height - self.th_1 - self.th_3,
+                                  *self.div_rotate(self.div_x, self.div_y, (self.width_2 - self.th_2) / 2, self.th_3,
+                                                   self.alpha), self.alpha), # web
                                  (self.width_2, self.th_3, self.div_x, self.div_y, self.alpha)  # lower flange
                                  ])
 
@@ -201,8 +211,12 @@ class ZSection(AnySections):
     # def __init__(self, width_1, height, width_2, th_1, th_2, th_3, div_x=0, div_y=0, alpha=0):
     def __init__(self, *args, **kwargs):
         self.self_prepare(*args, **kwargs)
-        super().__init__(square=[(self.width_1, self.th_1, self.div_x + self.width_2 - self.th_2, self.div_y + self.height-self.th_1, self.alpha), # upper flange
-                                 (self.th_2, self.height - self.th_1 - self.th_3, self.div_x + self.width_2 - self.th_2, self.div_y + self.th_3, self.alpha), # web
+        super().__init__(square=[(self.width_1, self.th_1,
+                                  *self.div_rotate(self.div_x, self.div_y, self.width_2 - self.th_2,
+                                                   self.height - self.th_1, self.alpha), self.alpha), # upper flange
+                                 (self.th_2, self.height - self.th_1 - self.th_3,
+                                  *self.div_rotate(self.div_x, self.div_y, self.width_2 - self.th_2, self.th_3,
+                                                   self.alpha), self.alpha), # web
                                  (self.width_2, self.th_3, self.div_x, self.div_y, self.alpha)  # lower flange
                                  ])
 
