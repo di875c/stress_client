@@ -135,6 +135,19 @@ DATA_BASE:
       file_type:
         excel:
           fr_str_format
+
+    Stringer:
+      name_db: Stringer
+      fields:
+        - number
+        - side
+      ref_fields: False
+    Frame:
+      name_db: Frame
+      fields:
+        - number
+      ref_fields: False
+
 WORK_TYPE:
     data_base:
       - name: Внести данные

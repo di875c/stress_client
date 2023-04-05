@@ -1,0 +1,65 @@
+###########
+# BUILDER #
+###########
+
+FROM python:3.8-alpine as builder
+
+WORKDIR /usr/src/gsite
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# установка зависимостей
+RUN apk update \
+    && apk add postgresql-dev gcc python3-dev musl-dev jpeg-dev zlib-dev libjpeg
+RUN pip install --upgrade pip
+
+# проверка кода через линтер
+#RUN pip install flake8
+#COPY . .
+#RUN flake8 --ignore=E501,F401 /usr/src/gsite/pensatm
+
+# установка зависимостей
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/gsite/wheels -r requirements.txt
+
+
+#########
+# FINAL #
+#########
+
+FROM python:3.8-alpine
+
+# создаем директорию для пользователя
+RUN mkdir -p /home/gsite
+
+# создаем отдельного пользователя
+RUN addgroup -S gsite && adduser -S gsite -G gsite
+
+# создание каталога для приложения
+ENV HOME=/home/gsite
+ENV GSITE_HOME=/home/gsite/web
+RUN mkdir $GSITE_HOME
+RUN mkdir $GSITE_HOME/static
+RUN mkdir $GSITE_HOME/media
+WORKDIR $GSITE_HOME
+
+# установка зависимостей и копирование из builder
+RUN apk update && apk add libpq libjpeg
+COPY --from=builder /usr/src/gsite/wheels /wheels
+COPY --from=builder /usr/src/gsite/requirements.txt .
+RUN pip install --no-cache /wheels/*
+
+# копирование entrypoint-prod.sh
+COPY ./entrypoint.prod.sh $GSITE_HOME
+
+# копирование проекта Django
+COPY . $GSITE_HOME
+
+# изменение прав для пользователя app
+RUN chown -R gsite:gsite $GSITE_HOME
+
+# изменение рабочего пользователя
+USER gsite
+
+ENTRYPOINT ["/home/gsite/web/entrypoint.prod.sh"]

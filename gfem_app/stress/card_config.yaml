@@ -30,5 +30,5 @@ PSHELL:
   - "$\n$PSHELL, property ID, material ID, element thickness\n$\n"
   - "PSHELL,{dct[uid]},{dct[material_id]},{dct[shell_thick]}\n"
 MAT1:
-  - "$\n$MAT1, material ID, Eu, nu, density\n$\n"
+  - "$\n$MAT1, material ID, Eu,Es, nu, density\n$\n"
   - "MAT1,{dct[uid]},{dct[eu]},,{dct[nu]},{dct[density]}\n"
