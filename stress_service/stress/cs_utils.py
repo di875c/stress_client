@@ -73,7 +73,8 @@ class BaseSquare:
     @property
     def pre_plot(self):
         return Rectangle((self.div_x, self.div_y), self.x, self.y, self.alpha * 180 / np.pi, linewidth=2, edgecolor='r',
-                         facecolor='none', rotation_point=(self.div_x, self.div_y))
+                         facecolor='none')
+                         # from matplot version 3.7 facecolor='none', rotation_point=(self.div_x, self.div_y))
 
 class BaseSegment:
     def __init__(self, radius, seg_angle, div_x, div_y, alpha):
@@ -138,7 +139,7 @@ class AnySections:
         fig, ax = plt.subplots()
         ax.add_collection(path)
         ax.scatter(*self.cog, c="r", marker="x", s=100, label="Center of gravity")
-        axis_angle = - self.inertia['alpha'] #+ self.alpha
+        axis_angle = - np.radians(self.inertia['alpha']) #+ self.alpha
         ax.axline(self.cog, slope=np.tan(axis_angle), color="black", linestyle="--")
         ax.axline(self.cog, slope=np.tan(axis_angle + 1.5708), color="black", linestyle="--")
         ax.autoscale()
@@ -155,7 +156,7 @@ class AnySections:
         dct = kwargs if len(kwargs) > 0 else args[0]
         if 'div_z' in dct:
             dct['div_x'], dct['div_y'] = dct['div_y'], dct['div_z']
-            dct['alpha'] = np.radians(dct['alpha'])
+        dct['alpha'] = np.radians(dct['alpha'])
         [setattr(self, attr, dct[attr]) for attr in dct]
 
     @staticmethod

@@ -24,4 +24,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # производим предварительную настройку
-ENTRYPOINT ["/usr/src/stress_client/entrypoint.sh"]
+#ENTRYPOINT ["/usr/src/stress_client/entrypoint.sh"]
