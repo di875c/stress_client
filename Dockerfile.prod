@@ -5,7 +5,7 @@
 FROM python:3.9-alpine as builder
 #python:3.10-alpine3.15
 
-WORKDIR /usr/src/stress_client
+WORKDIR /usr/src/s_client
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -18,11 +18,11 @@ RUN pip install --upgrade pip
 # проверка кода через линтер
 #RUN pip install flake8
 #COPY . .
-#RUN flake8 --ignore=E501,F401 /usr/src/stress_client/stress_client
+#RUN flake8 --ignore=E501,F401 /usr/src/s_client/stress_client
 
 # установка зависимостей
 COPY ./requirements.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/stress_client/wheels -r requirements.txt
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/s_client/wheels -r requirements.txt
 
 
 #########
@@ -32,14 +32,14 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/stress_client/wheels
 FROM python:3.9-alpine
 
 # создаем директорию для пользователя
-RUN mkdir -p /home/stress_client
+RUN mkdir -p /home/s_client
 
 # создаем отдельного пользователя
 RUN addgroup -S stress_admin && adduser -S stress_admin -G stress_admin
 
 # создание каталога для приложения
-ENV HOME=/home/stress_client
-ENV SCL_HOME=/home/stress_client/web
+ENV HOME=/home/s_client
+ENV SCL_HOME=/home/s_client/web
 RUN mkdir $SCL_HOME
 RUN mkdir $SCL_HOME/static
 RUN mkdir $SCL_HOME/media
@@ -47,8 +47,8 @@ WORKDIR $SCL_HOME
 
 # установка зависимостей и копирование из builder
 RUN apk update && apk add libpq libjpeg openblas-dev g++ geos-dev
-COPY --from=builder /usr/src/stress_client/wheels /wheels
-COPY --from=builder /usr/src/stress_client/requirements.txt .
+COPY --from=builder /usr/src/s_client/wheels /wheels
+COPY --from=builder /usr/src/s_client/requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache /wheels/*
 
@@ -64,4 +64,4 @@ RUN chown -R stress_admin:stress_admin $SCL_HOME
 # изменение рабочего пользователя
 USER stress_admin
 
-#ENTRYPOINT ["/home/gsite/web/entrypoint.sh"]
+ENTRYPOINT ["/home/s_client/web/entrypoint.sh"]
