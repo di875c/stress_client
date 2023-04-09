@@ -64,4 +64,5 @@ RUN chown -R stress_admin:stress_admin $SCL_HOME
 # изменение рабочего пользователя
 USER stress_admin
 
+#RUN ["chmod", "+x", "docker-entrypoint.sh"]
 ENTRYPOINT ["/home/s_client/web/entrypoint.sh"]
