@@ -139,7 +139,7 @@ class AnySections:
         fig, ax = plt.subplots()
         ax.add_collection(path)
         ax.scatter(*self.cog, c="r", marker="x", s=100, label="Center of gravity")
-        axis_angle = - np.radians(self.inertia['alpha']) #+ self.alpha
+        axis_angle = np.radians(self.inertia['alpha']) #+ self.alpha
         ax.axline(self.cog, slope=np.tan(axis_angle), color="black", linestyle="--")
         ax.axline(self.cog, slope=np.tan(axis_angle + 1.5708), color="black", linestyle="--")
         ax.autoscale()

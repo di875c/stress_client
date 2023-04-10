@@ -85,7 +85,8 @@ def convert_from_db(json_data: dict, file_format: str, table_name: str, easy_for
     db_file = Upload.objects.create(upload=filename)
     file_out = Upload.objects.get(id=db_file.id)
     # with pd.option_context('display.max_colwidth', -1)df.set_table_attributes('class="table-style"').to_html():
-    output_html = df.to_html(justify='left', classes="table table-striped", max_rows=10)
+    output_html = df.to_html(justify='left', classes="table table-striped", max_rows=10,
+                             float_format=lambda x: f"{x:.2f}")
     return file_out, output_html
 
 
