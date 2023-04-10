@@ -17,11 +17,10 @@ RUN geos-config --cflags
 # устанавливаем зависимости
 RUN pip install --upgrade pip
 COPY ./requirements.txt .
-#RUN pip install --upgrade --pre -i https://pypi.anaconda.org/scipy-wheels-nightly/simple numpy
 RUN pip install -r requirements.txt
 
 # копируем содержимое текущей папки в контейнер
 COPY . .
 
 # производим предварительную настройку
-#ENTRYPOINT ["/usr/src/stress_client/entrypoint.sh"]
+ENTRYPOINT ["/usr/src/stress_client/entrypoint.sh"]
