@@ -3,7 +3,6 @@
 ###########
 
 FROM python:3.9-alpine as builder
-#python:3.10-alpine3.15
 
 WORKDIR /usr/src/s_client
 
@@ -14,11 +13,6 @@ ENV PYTHONUNBUFFERED 1
 RUN apk update \
     && apk add postgresql-dev gcc python3-dev musl-dev jpeg-dev zlib-dev libjpeg build-base openblas-dev gfortran gdal-dev geos-dev geos
 RUN pip install --upgrade pip
-
-# проверка кода через линтер
-#RUN pip install flake8
-#COPY . .
-#RUN flake8 --ignore=E501,F401 /usr/src/s_client/stress_client
 
 # установка зависимостей
 COPY ./requirements.txt .

@@ -158,4 +158,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 with open('./gfem_app/config.yaml', encoding='utf-8') as f:
     CONFIG = yaml.safe_load(f)
-# DATA_BASE = CONFIG['DATA_BASE']

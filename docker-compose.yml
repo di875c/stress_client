@@ -24,11 +24,8 @@ services:
     # Внешний том(volume) и место где он будет подключен внутри контейнера
     volumes:
       - postgres_volume:/var/lib/postgresql/data/
-    environment:
-      # Учетные данные, которые можно будет переопределить
-      - POSTGRES_USER=django_user
-      - POSTGRES_PASSWORD=django_password
-      - POSTGRES_DB=django_db
+    env_file:
+      - ./.env.prod.db
       
 volumes:
   postgres_volume:
