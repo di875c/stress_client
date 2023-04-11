@@ -23,7 +23,7 @@ urlpatterns = [
     path('', simple_view, {'template': 'first_page.html'}),
     path('gfem/get_data', csrf_exempt(simple_view), {'template': 'get_page.html', 'models': CONFIG['DATA_BASE']}),
     path(r'ajax/get_response/', csrf_exempt(BaseInteract.as_view()), name='get_response'),
-    path(r'ajax/get_table_fields/', ajax_get_fields, name='get_table_fields'),
+    path(r'ajax/get_table_fields/', AjaxFields.as_view(), name='get_table_fields'),
     path('gfem/post_data', simple_view, {'template': 'post_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
     path('gfem/update_data', simple_view, {'template': 'change_page.html', 'models': CONFIG['DATA_BASE'].keys()}),
     path('gfem/delete_data', simple_view, {'template': 'delete_page.html', 'models': CONFIG['DATA_BASE'].keys()}),

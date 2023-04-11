@@ -119,7 +119,7 @@ class AnySections:
                                                  div_y=self.cog[1],
                                                  cog=True,
                                                  angle_rotate=0)
-        _inertia_list[-4] = np.rad2deg(_inertia_list[-4])
+        _inertia_list[-4] = - np.rad2deg(_inertia_list[-4])
         # change coordinate system from
         # 'Ixx', 'Iyy', 'Ixy', 'J', 'Ixx_cog', 'Iyy_cog', 'Ixy_cog', 'alpha', 'Imax_princ', 'Imin_princ'
         # to 'Iyy', 'Izz', 'Iyz', 'J', 'Iyy_cog', 'Izz_cog', 'Iyz_cog', 'alpha', 'Imax_princ', 'Imin_princ'

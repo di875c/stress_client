@@ -81,10 +81,10 @@ DATA_BASE:
       fields:
         - uid
         - type
-        - section_type
         - frame
         - stringer
         - side
+        - section_type
       ref_fields: True
       template: sections_template.xlsx
       file_type:
@@ -135,6 +135,65 @@ DATA_BASE:
       file_type:
         excel:
           fr_str_format
+
+    Sections_2:
+      name_db: Section
+      fields:
+        - uid
+        - type
+        - frame
+        - stringer
+        - side
+      dynamic_fields:
+        section-type:
+          ---Select_Section---:
+            Class_name: None
+            Parameters:
+              - None
+          Rectangular:
+            Class_name: Square
+            Parameters:
+              - height
+              - width_1
+          I-Section:
+            Class_name: ISection
+            Parameters:
+              - width_1
+              - height
+              - width_2
+              - th_1
+              - th_2
+              - th_3
+          L-Section:
+            Class_name: AngleSection
+            Parameters:
+              - width_1
+              - height
+              - th_1
+              - th_2
+          C-Section:
+            Class_name: CSection
+            Parameters:
+              - width_1
+              - height
+              - width_2
+              - th_1
+              - th_2
+              - th_3
+          Z-Section:
+            Class_name: ZSection
+            Parameters:
+              - width_1
+              - height
+              - width_2
+              - th_1
+              - th_2
+              - th_3
+          FEM-Polygon:
+            Class_name: FemPolygon
+            Parameters:
+              - y
+              - z
 
     Stringer:
       name_db: Stringer

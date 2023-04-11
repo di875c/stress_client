@@ -81,6 +81,7 @@ function send_table_parameters(){
 $(document).ready(function(){
     $("#table_name").change(function(e){
         var frm = $('#table_name').val();
+        var chk = $('#excel_checkbox').is(":checked");
         if(frm=='FEM-Polygon'){
                 $("#points_number").html("<label>количество точек в сечении: <input class='update_param_list' type='number' name='points' id='points' value=4></label>");
                 $("#points").on('change', send_table_parameters);

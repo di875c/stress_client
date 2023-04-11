@@ -176,28 +176,86 @@ def file_save_view(request, template, *args, **kwargs):
     return render(request, template, {'file_url': file_url})
 
 
-def ajax_get_fields(request, *args, **kwargs):
-    '''
-    ajax rendering view for additional fields which depends on selected table or another input options
-    '''
-    param = request.GET.dict()
-    table_name = param.pop('table_name')
-    if 'excel_selection' not in param:
-        if table_name in CONFIG['DATA_BASE']:
+# def ajax_get_fields(request, *args, **kwargs):
+#     '''
+#     ajax rendering view for additional fields which depends on selected table or another input options
+#     '''
+#     param = request.GET.dict()
+#     table_name = param.pop('table_name')
+#     if 'excel_selection' not in param:
+#         if table_name in CONFIG['DATA_BASE']:
+#             table_fields = CONFIG['DATA_BASE'][table_name]['fields']
+#             param['form'] = BaseDynamicForm({"dynamic_fields": table_fields}).as_table()
+#         elif table_name in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE']:
+#             table_fields = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][table_name]['Parameters'] +\
+#                            CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']
+#             if table_name == "FEM-Polygon":
+#                 number = int(param.pop('points'))
+#                 table_fields = [(f'y_{idx}', f'z_{idx}') for idx in range(number)]
+#                 table_fields = recur_unpack(table_fields)
+#             param['form'] = BaseDynamicForm({"dynamic_fields": table_fields, "type_fields": 'float'}).as_table()
+#     elif param['excel_selection'] == 'on':
+#         param['excel_selection'] = True
+#         param['form'] = UploadForm
+#         param['template'] = CONFIG['DATA_BASE'][table_name].get('template', None) if table_name in CONFIG['DATA_BASE'] else None
+#     if 'save_in_file' in param and param['save_in_file'] == 'on' and 'file_type' in CONFIG['DATA_BASE'][table_name]:
+#         param['save_file_form'] = CONFIG['DATA_BASE'][table_name]['file_type'].keys()
+#     return render(request, 'table_form.html', param)
+
+
+
+
+class AjaxFields(View):
+    def get(self, request):
+        param = request.GET.dict()
+        param = self.chain(request, param)
+        return render(request, 'table_form.html', param)
+
+    def chain(self, request, param):
+        table_name = param.get('table_name')
+        if not table_name:
+            return param
+        else:
+            # two rows without excel selection and with excel selection
+            *args, param = self.save_in_file(*self.cs_input(*self.static_fields(
+                *self.dynamic_fields(request, table_name, param)))) if 'excel_selection' not in param else \
+                self.save_in_file(*self.excel_input(request, table_name, param))
+        return param
+
+    def dynamic_fields(self, request, table_name, param):
+        if table_name in CONFIG['DATA_BASE'] and 'dynamic_fields' in CONFIG['DATA_BASE'][table_name]:
+            table_fields = CONFIG['DATA_BASE'][table_name]['dynamic_fields'].keys()
+            param['dynamic-form'] = BaseDynamicForm({"dynamic_fields": table_fields}).as_table()
+
+        # TODO create additional template for dynamic fields;
+        return request, table_name, param
+
+    def static_fields(self, request, table_name, param):
+        if table_name in CONFIG['DATA_BASE'] and 'fields' in CONFIG['DATA_BASE'][table_name]:
             table_fields = CONFIG['DATA_BASE'][table_name]['fields']
             param['form'] = BaseDynamicForm({"dynamic_fields": table_fields}).as_table()
-        elif table_name in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE']:
-            table_fields = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][table_name]['Parameters'] +\
+        return request, table_name, param
+
+    def cs_input(self, request, table_name, param):
+        if table_name in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE']:
+            table_fields = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][table_name]['Parameters'] + \
                            CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']
             if table_name == "FEM-Polygon":
                 number = int(param.pop('points'))
                 table_fields = [(f'y_{idx}', f'z_{idx}') for idx in range(number)]
                 table_fields = recur_unpack(table_fields)
             param['form'] = BaseDynamicForm({"dynamic_fields": table_fields, "type_fields": 'float'}).as_table()
-    elif param['excel_selection'] == 'on':
-        param['excel_selection'] = True
-        param['form'] = UploadForm
-        param['template'] = CONFIG['DATA_BASE'][table_name].get('template', None) if table_name in CONFIG['DATA_BASE'] else None
-    if 'save_in_file' in param and param['save_in_file'] == 'on' and 'file_type' in CONFIG['DATA_BASE'][table_name]:
-        param['save_file_form'] = CONFIG['DATA_BASE'][table_name]['file_type'].keys()
-    return render(request, 'table_form.html', param)
+        return request, table_name, param
+
+    def excel_input(self, request, table_name, param):
+        if param.get('excel_selection') == 'on':
+            param['excel_selection'] = True
+            param['form'] = UploadForm
+            param['template'] = CONFIG['DATA_BASE'][table_name].get('template') if table_name in CONFIG['DATA_BASE'] \
+                else None
+        return request, table_name, param
+
+    def save_in_file(self, request, table_name, param):
+        if param.get('save_in_file') == 'on' and 'file_type' in CONFIG['DATA_BASE'][table_name]:
+            param['save_file_form'] = CONFIG['DATA_BASE'][table_name]['file_type'].keys()
+        return request, table_name, param
