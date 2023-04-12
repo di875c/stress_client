@@ -33,11 +33,28 @@ DATA_BASE:
       fields:
         - uid
         - element_ref
-        - frame
-        - stringer
-        - side
-        - nodes
         - property_id
+      dynamic_fields:
+        type:
+          CBEAM:
+            - node_1
+            - node_2
+            - offset_1
+            - offset_2
+          CROD:
+            - node_1
+            - node_2
+          CQUAD:
+            - node_1
+            - node_2
+            - node_3
+            - node_4
+            - off_1_x
+          CTRIA:
+            - node_1
+            - node_2
+            - node_3
+            - off_1_x
       ref_fields: False
       template: element_template.xlsx
       file_type:
@@ -80,11 +97,44 @@ DATA_BASE:
       name_db: Section
       fields:
         - uid
-        - type
+        - geo_type
         - frame
         - stringer
         - side
-        - section_type
+      dynamic_fields:
+        type:
+          Rectangular:
+            - height
+            - width_1
+          I-Section:
+            - width_1
+            - height
+            - width_2
+            - th_1
+            - th_2
+            - th_3
+          L-Section:
+            - width_1
+            - height
+            - th_1
+            - th_2
+          C-Section:
+            - width_1
+            - height
+            - width_2
+            - th_1
+            - th_2
+            - th_3
+          Z-Section:
+            - width_1
+            - height
+            - width_2
+            - th_1
+            - th_2
+            - th_3
+          FEM-Polygon:
+              - y
+              - z
       ref_fields: True
       template: sections_template.xlsx
       file_type:
@@ -112,11 +162,16 @@ DATA_BASE:
       name_db: ElProperty
       fields:
         - uid
-        - type
         - material_id
-        - shell_thick
-        - section_start
-        - section_end
+      dynamic_fields:
+        type:
+          PSHELL:
+            - shell_thick
+          CBEAM:
+            - section_start
+            - section_end
+          CROD:
+            - section_start
       ref_fields: False
       file_type:
         excel:
@@ -135,66 +190,6 @@ DATA_BASE:
       file_type:
         excel:
           fr_str_format
-
-    Sections_2:
-      name_db: Section
-      fields:
-        - uid
-        - type
-        - frame
-        - stringer
-        - side
-      dynamic_fields:
-        section-type:
-          ---Select_Section---:
-            Class_name: None
-            Parameters:
-              - None
-          Rectangular:
-            Class_name: Square
-            Parameters:
-              - height
-              - width_1
-          I-Section:
-            Class_name: ISection
-            Parameters:
-              - width_1
-              - height
-              - width_2
-              - th_1
-              - th_2
-              - th_3
-          L-Section:
-            Class_name: AngleSection
-            Parameters:
-              - width_1
-              - height
-              - th_1
-              - th_2
-          C-Section:
-            Class_name: CSection
-            Parameters:
-              - width_1
-              - height
-              - width_2
-              - th_1
-              - th_2
-              - th_3
-          Z-Section:
-            Class_name: ZSection
-            Parameters:
-              - width_1
-              - height
-              - width_2
-              - th_1
-              - th_2
-              - th_3
-          FEM-Polygon:
-            Class_name: FemPolygon
-            Parameters:
-              - y
-              - z
-
     Stringer:
       name_db: Stringer
       fields:
@@ -226,57 +221,15 @@ WORK_TYPE:
         url_added: stress-service/
 CALCULATION_TYPE:
   CROSS-SECTION:
-    SECTION-TYPE:
-      ---Select_Section---:
-        Class_name: None
-        Parameters:
-          - None
-      Rectangular:
-        Class_name: Square
-        Parameters:
-          - height
-          - width_1
-      I-Section:
-        Class_name: ISection
-        Parameters:
-          - width_1
-          - height
-          - width_2
-          - th_1
-          - th_2
-          - th_3
-      L-Section:
-        Class_name: AngleSection
-        Parameters:
-          - width_1
-          - height
-          - th_1
-          - th_2
-      C-Section:
-        Class_name: CSection
-        Parameters:
-          - width_1
-          - height
-          - width_2
-          - th_1
-          - th_2
-          - th_3
-      Z-Section:
-        Class_name: ZSection
-        Parameters:
-          - width_1
-          - height
-          - width_2
-          - th_1
-          - th_2
-          - th_3
-      FEM-Polygon:
-        Class_name: FemPolygon
-        Parameters:
-          - y
-          - z
     STANDARD-PART:
       Parameters:
         - div_y
         - div_z
         - alpha
+VOCABULARY:
+  Rectangular: Square
+  I-Section: ISection
+  L-Section: AngleSection
+  C-Section: CSection
+  Z-Section: ZSection
+  FEM-Polygon: FemPolygon

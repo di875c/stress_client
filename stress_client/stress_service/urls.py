@@ -23,7 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 urlpatterns = [
     path('id-generate/', simple_view, {'template': 'id_generate.html'}),
     path(r'ajax/generator-id', csrf_exempt(id_generate_view), name='generator-ID'),
-    path('service_CS/', simple_view, {'template': 'calculate_page.html', 'models': CONFIG['CALCULATION_TYPE']
-                                      ['CROSS-SECTION']['SECTION-TYPE'].keys()}),
+    path('service_CS/', simple_view, {'template': 'calculate_page.html', 'models': CONFIG['DATA_BASE']
+                                      ['Sections']['dynamic_fields']['type'].keys()}),
     path(r'ajax/CS-calculation/', csrf_exempt(cs_calculation_view), name='calculate_CS'),
 ]

@@ -2,7 +2,7 @@ import pandas as pd
 from gfem_app.model import Upload
 from django.db.models.query import QuerySet
 from stress_client.settings import CONFIG
-from .stress.cs_utils import *
+from .stress import cs_utils
 
 
 def uid_generate(file: object, uid=100) -> QuerySet[Upload]:
@@ -45,16 +45,20 @@ def cs_converter(db_cs_lst: list) -> list:
     """
     sections = []
     for item in db_cs_lst:
-        section_config = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][item['type']]
+        section_config = CONFIG['DATA_BASE']['Sections']['dynamic_fields']['type'][item['type']]
         if db_cs_lst[0]['type'] == 'FEM-Polygon':
             _points_number = int(db_cs_lst[0].pop('points'))
             dct = [(db_cs_lst[0].pop(f'y_{idx}'), db_cs_lst[0].pop(f'z_{idx}')) for idx in range(_points_number)]
         else:
-            dct = {k: float(item.pop(k)) for k in list(item.keys()) if k in section_config['Parameters'] or
+            dct = {k: float(item.pop(k)) for k in list(item.keys()) if k in section_config or
                    k in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']}
             print(dct)
         # print(dct)
-        section = globals()[section_config['Class_name']](dct)
+        SECTION = cs_utils.__dict__.get(CONFIG['VOCABULARY'][item['type']])
+        if SECTION:
+            section = SECTION(dct)
+        else:
+            raise AttributeError('Wrong section name')
         item.update(section.output)
         sections.append(item)
     picture = None if len(db_cs_lst) > 1 else section.plot

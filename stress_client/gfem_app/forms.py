@@ -19,8 +19,8 @@ class BaseDynamicForm(forms.Form):
     def __init__(self, *args, **kwargs):
         _condition = True
         for arg in args:
-            if 'dynamic_fields' in arg:
-                dynamic_fields = arg.pop('dynamic_fields')
+            if 'static_fields' in arg:
+                dynamic_fields = arg.pop('static_fields')
             if 'validate' in arg:
                 _condition = arg.pop('validate')
             type_fields = arg.pop('type_fields') if 'type_fields' in arg else 'str'

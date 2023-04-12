@@ -70,7 +70,7 @@ $(document).ready(function(){
 <script>
     $('#parameters-form').submit(function(e){
         e.preventDefault();
-        alert("Updated");
+        alert("Запрос на обновление отправлен");
         var formData = new FormData(this);
         $.ajax({
             type: 'POST',

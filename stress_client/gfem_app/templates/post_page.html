@@ -69,7 +69,7 @@ $(document).ready(function(){
  <script>
     $('#parameters-form').submit(function(e){
         e.preventDefault();
-        alert("mdasd");
+        alert("данные отправлены на сервер");
         var formData = new FormData(this);
         $.ajax({
             type: 'POST',
