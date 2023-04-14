@@ -28,7 +28,7 @@ def prepare_request(func):
         rct = request.POST if request.method == 'POST' else request.GET
         table_name = rct.get('table_name', None)
         for k, v in rct.dict().items():
-            if v and k not in ('_method', 'save_in_file', 'file_type', 'table_name'):
+            if v and k not in ('_method', 'save_in_file', 'file_type', 'table_name') and v != '---Select_table---':
                 if rct['_method'] in ('post', 'put') or re.search(r"^[=><]{1,2}[ ]\w+", v):
                     parameters[k] = v
                 else:

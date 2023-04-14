@@ -36,6 +36,8 @@ DATA_BASE:
         - property_id
       dynamic_fields:
         type:
+          ---Select_table---:
+            - None
           CBEAM:
             - node_1
             - node_2
@@ -103,6 +105,8 @@ DATA_BASE:
         - side
       dynamic_fields:
         type:
+          ---Select_table---:
+            - None
           Rectangular:
             - height
             - width_1
@@ -165,12 +169,14 @@ DATA_BASE:
         - material_id
       dynamic_fields:
         type:
+          ---Select_table---:
+            - None
           PSHELL:
             - shell_thick
-          CBEAM:
+          PBEAM:
             - section_start
             - section_end
-          CROD:
+          PROD:
             - section_start
       ref_fields: False
       file_type:
