@@ -25,14 +25,15 @@ def error_function(func):
 def prepare_request(func):
     def _wrapper(self, request):
         parameters = {}
-        dct = request.POST if request.method == 'POST' else request.GET
-        table_name = dct.get('table_name', None)
-        for k, v in dct.dict().items():
+        rct = request.POST if request.method == 'POST' else request.GET
+        table_name = rct.get('table_name', None)
+        for k, v in rct.dict().items():
             if v and k not in ('_method', 'save_in_file', 'file_type', 'table_name'):
-                if dct['_method'] in ('post', 'put') or re.search(r"^[=><]{1,2}[ ]\w+", v):
+                if rct['_method'] in ('post', 'put') or re.search(r"^[=><]{1,2}[ ]\w+", v):
                     parameters[k] = v
                 else:
                     parameters[k] = ['== ' + v]
+                    print(parameters[k])
         url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
         result = func(self, request, table_name, url, parameters)
         return result
@@ -65,6 +66,7 @@ class BaseInteract(View):
     @prepare_request
     def get(self, request, table_name=None, url=None, parameters=None):
         file_format = request.GET.dict().get('file_type')
+        print(parameters)
         form = BaseDynamicForm(request.GET, {"static_fields": parameters})
         # print(request.POST)
         if not form.is_valid():

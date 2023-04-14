@@ -17,7 +17,7 @@ def validate_with_condition(value):
 
 class BaseDynamicForm(forms.Form):
     def __init__(self, *args, **kwargs):
-        _condition = True
+        _condition = False
         for arg in args:
             if 'static_fields' in arg:
                 dynamic_fields = arg.pop('static_fields')
