@@ -212,8 +212,6 @@ WORK_TYPE:
         url_added: stress-service/service_CS
       - name: Создать карту id
         url_added: stress-service/id-generate
-      - name: Расчет нагрузок
-        url_added: stress-service/
 # Типы расчетов (было перемещено в основные таблицы). Требует переработки!!!!
 CALCULATION_TYPE:
   CROSS-SECTION:
