@@ -4,9 +4,32 @@
 {% block content %}
 <body>
 <div class="justify-content-center m-3">
-<h1> Стартовая страница </h1>
-<h2> Здесь может быть размещена общая информация, описание web приложения, правила использования и
-    другая полезная информация</h2>
+<div class="row">
+   <div class="col-4 col-lg-2">
+      <div class="list-group" id="list-tab" role="tablist">
+        <a class="list-group-item list-group-item-action active" id="list-description-list" data-bs-toggle="list" href="#list-description" role="tab" aria-controls="home">Описание</a>
+        <a class="list-group-item list-group-item-action" id="list-node-list" data-bs-toggle="list" href="#list-node" role="tab" aria-controls="node">Узловые точки</a>
+        <a class="list-group-item list-group-item-action" id="list-sections-list" data-bs-toggle="list" href="#list-sections" role="tab" aria-controls="sections">Задание сечений</a>
+        <a class="list-group-item list-group-item-action" id="list-skin-list" data-bs-toggle="list" href="#list-skin" role="tab" aria-controls="skin">Задание толщин общивки</a>
+      </div>
+   </div>
+   <div class="col-8 col-lg-10">
+      <div class="tab-content" id="list-nav-tabContent">
+        <div class="tab-pane fade show active" id="list-description" role="tabpanel" aria-labelledby="list-description-list">
+            Данная программа служит для автоматизации занесения результатов образмеривания и создания КЭМ
+    на основе этих данных. И дальнейшей работы с полученными результатами расчета (нагрзуками).</div>
+        <div class="tab-pane fade" id="list-node" role="tabpanel" aria-labelledby="list-node-list">
+            После создания основного каркаса (задания нумерации stringer frame), следует собрать и занести информацию
+    по узловым точкам. Помимо координат необходимо указать номер шпангоута, номер стрингер и сторону.</div>
+        <div class="tab-pane fade" id="list-sections" role="tabpanel" aria-labelledby="list-sections-list">
+            Затем можно приступить к заданию поперечного сечения элементов. Помимо размеров для каждого сечения необходимо
+    указать тип структуры Frame, Stringer, Rib и т.д, так же требуется указать расположение сечения (номер шпангоута,
+    сторона и номер стрингера)</div>
+        <div class="tab-pane fade" id="list-skin" role="tabpanel" aria-labelledby="list-skin-list">
+            Задание толщин обшивки происходит в меню.......
+        </div>
+      </div>
+   </div>
 </div>
 </body>
 {% endblock %}

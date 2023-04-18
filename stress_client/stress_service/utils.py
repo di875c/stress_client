@@ -45,7 +45,7 @@ def cs_converter(db_cs_lst: list) -> list:
     """
     sections = []
     for item in db_cs_lst:
-        section_config = CONFIG['DATA_BASE']['Sections']['dynamic_fields']['type'][item['type']]
+        section_config = CONFIG['DATA_BASE']['Section']['dynamic_fields']['type'][item['type']]
         if db_cs_lst[0]['type'] == 'FEM-Polygon':
             _points_number = int(db_cs_lst[0].pop('points'))
             dct = [(db_cs_lst[0].pop(f'y_{idx}'), db_cs_lst[0].pop(f'z_{idx}')) for idx in range(_points_number)]

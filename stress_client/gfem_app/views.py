@@ -22,6 +22,7 @@ def error_function(func):
         return result
     return _wrapper
 
+
 def prepare_request(func):
     def _wrapper(self, request):
         parameters = {}
@@ -38,8 +39,6 @@ def prepare_request(func):
         result = func(self, request, table_name, url, parameters)
         return result
     return _wrapper
-
-
 
 
 def simple_view(request, template, *args, **kwargs):
@@ -62,19 +61,16 @@ class BaseInteract(View):
             return self.delete(request, *args, **kwargs)
         return super(BaseInteract, self).dispatch(request, *args, **kwargs)
 
-    # @error_function
+    @error_function
     @prepare_request
     def get(self, request, table_name=None, url=None, parameters=None):
         file_format = request.GET.dict().get('file_type')
-        print(parameters)
         form = BaseDynamicForm(request.GET, {"static_fields": parameters})
-        # print(request.POST)
         if not form.is_valid():
             return render(request, 'table_form.html', {'form': form.as_table()})
-        parameters['table_name'] = CONFIG['DATA_BASE'][table_name]['name_db']
+        parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
         response = requests.get(url, params=parameters)  # , timeout=4)
         if response.status_code == 200:
-            # print(response.json())
             out_file, html_table = convert_from_db(json_data=response.json()['parameters'],
                                                    file_format=file_format,
                                                    table_name=table_name)
@@ -91,22 +87,18 @@ class BaseInteract(View):
     @error_function
     @prepare_request
     def post(self, request, table_name=None, url=None, parameters=None):
-        # print(request.POST.dict())
-        # parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
-        # url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
-        # table_name = parameters.pop('table_name')
-        # print(parameters)
         if 'excel_selection' in parameters:
             dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE'][table_name]['ref_fields'])
             print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
-            parameters = {'table_name': CONFIG['DATA_BASE'][table_name]['name_db']}
+            #parameters = {'table_name': CONFIG['DATA_BASE'][table_name]['name_db']}
+            parameters = {'table_name': CONFIG['VOCABULARY'].get(table_name, table_name)}
             response = requests.post(url, params=parameters, data=json.dumps({"parameters": dct}),
                                      headers={'Content-Type': 'application/json'})  # , timeout=4)
         else:
             form = BaseDynamicForm(request.POST, {"static_fields": parameters, 'validate': False})
             if not form.is_valid():
                 return render(request, 'table_form.html', {'form': form})
-            parameters['table_name'] = CONFIG['DATA_BASE'][table_name]['name_db']
+            parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
             response = requests.post(url, params=parameters)
         # url = "https://46bda8ba-446a-4aa1-b765-00c57f94efe3.mock.pstmn.io" + '/db'
         # print(response.status_code, response.text)
@@ -122,25 +114,17 @@ class BaseInteract(View):
     @error_function
     @prepare_request
     def delete(self, request, table_name=None, url=None, parameters=None):
-        # print(request.POST)
-        # parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
-        # url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
-        # table_name = parameters.pop('table_name')
-        # print(parameters)
         if 'excel_selection' in parameters:
-            # print(request.FILES, '\n', CONFIG['DATA_BASE'][table_name]['ref_fields'])
             dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE'][table_name]['ref_fields'], ['uid'])
             print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
-            parameters = {'table_name': CONFIG['DATA_BASE'][table_name]['name_db']}
-            # print(parameters)
+            parameters = {'table_name': CONFIG['VOCABULARY'].get(table_name, table_name)}
             response = requests.delete(url, params=parameters, data=json.dumps({"parameters": dct}),
                                        headers={'Content-Type': 'application/json'})
         else:
             form = BaseDynamicForm(request.POST, {"static_fields": parameters})
             if not form.is_valid():
                 return render(request, 'table_form.html', {'form': form})
-            parameters['table_name'] = CONFIG['DATA_BASE'][table_name]['name_db']
-            # print(parameters)
+            parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
             response = requests.delete(url, params=parameters)
         if response.status_code == 200:
             data = {'messages': f'Тестируем. {response.text}'}
@@ -154,24 +138,17 @@ class BaseInteract(View):
     @error_function
     @prepare_request
     def put(self, request, table_name=None, url=None, parameters=None):
-        # print('Put request: ', request.POST)
-        # parameters = {k: v for k, v in request.POST.dict().items() if v and k != '_method'}
-        # url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
-        # table_name = parameters.pop('table_name')
-        # print(parameters)
         if 'excel_selection' in parameters:
             dct = from_xls_to_dict(request.FILES['upload'], False)
             print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
-            parameters = {'table_name': CONFIG['DATA_BASE'][table_name]['name_db']}
-            # print(parameters)
+            parameters = {'table_name': CONFIG['VOCABULARY'].get(table_name, table_name)}
             response = requests.put(url, params=parameters, data=json.dumps({"parameters": dct}),
                                     headers={'Content-Type': 'application/json'})
         else:
             form = BaseDynamicForm(request.POST, {"static_fields": parameters, 'validate': False})
             if not form.is_valid():
                 return render(request, 'table_form.html', {'form': form})
-            parameters['table_name'] = CONFIG['DATA_BASE'][table_name]['name_db']
-            # print(parameters)
+            parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
             response = requests.put(url, params=parameters)
         if response.status_code == 200:
             data = {'messages': f'Тестируем. {response.text}'}
@@ -189,35 +166,6 @@ def file_save_view(request, template, *args, **kwargs):
     '''
     file_url = request.GET['file'] if request.GET['file'] else '#'
     return render(request, template, {'file_url': file_url})
-
-
-# def ajax_get_fields(request, *args, **kwargs):
-#     '''
-#     ajax rendering view for additional fields which depends on selected table or another input options
-#     '''
-#     param = request.GET.dict()
-#     table_name = param.pop('table_name')
-#     if 'excel_selection' not in param:
-#         if table_name in CONFIG['DATA_BASE']:
-#             table_fields = CONFIG['DATA_BASE'][table_name]['fields']
-#             param['form'] = BaseDynamicForm({"dynamic_fields": table_fields}).as_table()
-#         elif table_name in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE']:
-#             table_fields = CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['SECTION-TYPE'][table_name]['Parameters'] +\
-#                            CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']
-#             if table_name == "FEM-Polygon":
-#                 number = int(param.pop('points'))
-#                 table_fields = [(f'y_{idx}', f'z_{idx}') for idx in range(number)]
-#                 table_fields = recur_unpack(table_fields)
-#             param['form'] = BaseDynamicForm({"dynamic_fields": table_fields, "type_fields": 'float'}).as_table()
-#     elif param['excel_selection'] == 'on':
-#         param['excel_selection'] = True
-#         param['form'] = UploadForm
-#         param['template'] = CONFIG['DATA_BASE'][table_name].get('template', None) if table_name in CONFIG['DATA_BASE'] else None
-#     if 'save_in_file' in param and param['save_in_file'] == 'on' and 'file_type' in CONFIG['DATA_BASE'][table_name]:
-#         param['save_file_form'] = CONFIG['DATA_BASE'][table_name]['file_type'].keys()
-#     return render(request, 'table_form.html', param)
-
-
 
 
 class AjaxFields(View):
@@ -245,7 +193,7 @@ class AjaxFields(View):
 
     def add_dynamic_fields(self, request, table_name, param):
         if table_name == 'add_dynamic_field':
-            static_param = [val for key, val in param.items() if key.startswith('st_par_')]
+            static_param = {key.replace('st_par_', ''): val for key, val in param.items() if key.startswith('st_par_')}
             param['form'] = BaseDynamicForm({"static_fields": static_param}).as_table()
         return request, table_name, param
 
@@ -253,17 +201,18 @@ class AjaxFields(View):
         if table_name in CONFIG['DATA_BASE'] and 'fields' in CONFIG['DATA_BASE'][table_name]:
             table_fields = CONFIG['DATA_BASE'][table_name]['fields']
             param['form'] = BaseDynamicForm({"static_fields": table_fields}).as_table()
-            # print(param['form'])
         return request, table_name, param
 
     def cs_input(self, request, table_name, param):
-        if table_name in CONFIG['DATA_BASE']['Sections']['dynamic_fields']['type']:
-            table_fields = CONFIG['DATA_BASE']['Sections']['dynamic_fields']['type'][table_name] + \
-                           CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']
+        if table_name in CONFIG['DATA_BASE']['Section']['dynamic_fields']['type']:
+            table_fields = CONFIG['DATA_BASE']['Section']['dynamic_fields']['type'][table_name]
+            table_fields.update(CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters'])
             if table_name == "FEM-Polygon":
                 number = int(param.pop('points'))
-                table_fields = [(f'y_{idx}', f'z_{idx}') for idx in range(number)]
-                table_fields = recur_unpack(table_fields)
+                table_fields = dict()
+                for idx in range(number):
+                    table_fields[f'y_{idx}'] = f"координата y {idx}-й точки"
+                    table_fields[f'z_{idx}'] = f"координата z {idx}-й точки"
             param['form'] = BaseDynamicForm({"static_fields": table_fields, "type_fields": 'float'}).as_table()
         return request, table_name, param
 

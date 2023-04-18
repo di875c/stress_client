@@ -51,8 +51,8 @@
 function updateFields(lst) {
     var name = "add_dynamic_field";
     var data = {'table_name':name};
-    for (var i=0; i< lst.length; i++){
-        data["st_par_"+i] = lst[i];
+    for (var prop in lst){
+        data["st_par_"+prop] = lst[prop];
     }
     $.ajax({
             url: '{% url 'get_table_fields' %}',

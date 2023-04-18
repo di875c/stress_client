@@ -26,8 +26,8 @@ class BaseDynamicForm(forms.Form):
             type_fields = arg.pop('type_fields') if 'type_fields' in arg else 'str'
         validator = [validate_with_condition] if _condition else []
         super(BaseDynamicForm, self).__init__(*args, **kwargs)
-        for key in dynamic_fields:
-            self.fields[key] = TYPE_FIELD[type_fields](validators=validator, help_text='описание', required=False)
+        for key, val in dynamic_fields.items():
+            self.fields[key] = TYPE_FIELD[type_fields](validators=validator, help_text=val, required=False)
 
 
 class UploadForm(forms.ModelForm):
