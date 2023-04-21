@@ -44,6 +44,15 @@
                 <li><a class="dropdown-item" href="/{{ data.url_added }}">{{ data.name }}</a></li>
                 {% endfor %}
             </ul>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Стандарты
+              </a>
+            <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="dropdownMenuLight">
+                {% for data in catalogs.standards %}
+                <li><a class="dropdown-item" href="/{{ data.url_added }}">{{ data.name }}</a></li>
+                {% endfor %}
+            </ul>
             <li class="nav-item"><a class="nav-link active"  href="/aboutus">Помощь</a></li>
             <li class="nav-item"><a class="nav-link active"  href="/contacts">Контакты</a></li>
           </ul>

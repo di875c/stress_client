@@ -23,10 +23,47 @@ def error_function(func):
         try:
             result = func(*args, **kwargs)
             return result
+        except OSError as error:
+            raise OSError(error)
         except Exception as error:
-            print(f'Excel error {error}')
-            raise ValueError(f'Excel error {error}')
+            raise ValueError(f'Excel file read error. {error}')
     return _wrapper
+
+
+def chunks(s, n):
+    """Produce `n`-character chunks from `s`."""
+    # s = s.replace('\n', '')
+    for start in range(0, len(s), n):
+        yield s[start:start+n]
+
+
+def bdf_read_function(file, len_format):
+    """
+    :param file: 'GRID*    21395                          1271.30786132813850.981140136719
+                  *       206.04052734375
+                  CROD     154622  59      6010922 6010921
+                  CHEXA    210433  91      6054226 6054234 6054235 6054224 6054541 6054549
+                           6054550 6054539'
+    :param len_format:
+    :return:
+    """
+    json = list()
+    _dict = dict()
+    # print(file)
+    for line in file:
+        line = line.decode('utf-8')
+        if line.startswith('*') or line.startswith(' '):
+            _dict['card_str'] += line
+        elif line.startswith('$') or not line or line.startswith('END'):
+            continue
+        else:
+            json.append(_dict)
+            _type, _id, *line = [_item for _item in chunks(line, len_format)]
+            _dict = {'type': _type, 'uid': int(_id), 'card_str': "".join(line)}
+    json.append(_dict) if json[-1] != _dict else None
+    file.close()
+    print(json)
+    return json
 
 
 def csv_reader_decarate(func):
@@ -34,13 +71,20 @@ def csv_reader_decarate(func):
     wrapper to read data frame from csv file
     '''
     def _wrapper(*args, **kwargs):
-        # print('args: ', args, 'kwargs: ', kwargs)
         if args[0]._name.endswith('xlsx'):
             result = func(*args, **kwargs)
             return result
         elif args[0]._name.endswith('csv'):
-            json = pd.read_csv(args[0]).to_dict('records')
-            # print(json)
+            try:
+                json = pd.read_csv(args[0]).to_dict('records')
+            except Exception as error:
+                raise OSError(f'File {args[0]} read. {error}')
+            return json
+        elif args[0]._name.endswith('bdf'):
+            try:
+                json = bdf_read_function(args[0], 8)
+            except Exception as error:
+                raise OSError(f'File {args[0]} read. {error}')
             return json
     return _wrapper
 

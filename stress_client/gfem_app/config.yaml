@@ -187,6 +187,17 @@ DATA_BASE:
       file_type:
         excel:
           fr_str_format
+    Others:
+      fields:
+        uid: "Идентификационный номер сечения"
+        type: "Тип карточки"
+        card_str: "текстовое поле карточки"
+        comment: "комментарии"
+      ref_fields: False
+      file_type:
+        excel:
+          easy_format
+        bdf:
     Stringer:
       fields:
         number: "Номер стрингера"
@@ -212,6 +223,13 @@ WORK_TYPE:
         url_added: stress-service/service_CS
       - name: Создать карту id
         url_added: stress-service/id-generate
+    standards:
+      - name: Материалы
+        url_added: "#"
+      - name: Крепеж
+        url_added: "#"
+      - name: Параметры усталости
+        url_added: "#"
 # Типы расчетов (было перемещено в основные таблицы). Требует переработки!!!!
 CALCULATION_TYPE:
   CROSS-SECTION:
