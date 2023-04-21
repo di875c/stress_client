@@ -49,20 +49,19 @@ def bdf_read_function(file, len_format):
     """
     json = list()
     _dict = dict()
-    # print(file)
     for line in file:
         line = line.decode('utf-8')
-        if line.startswith('*') or line.startswith(' '):
-            _dict['card_str'] += line
-        elif line.startswith('$') or not line or line.startswith('END'):
+        if line.startswith('$') or not line or line.startswith('END'):
             continue
+        elif line.startswith('*') or line.startswith(' '):
+            _dict['card_str'] += line
         else:
-            json.append(_dict)
+            json.append(_dict) # add dict to json from previous loop
             _type, _id, *line = [_item for _item in chunks(line, len_format)]
-            _dict = {'type': _type, 'uid': int(_id), 'card_str': "".join(line)}
-    json.append(_dict) if json[-1] != _dict else None
+            _dict = {'type': _type, 'uid': int(_id), 'card_str': "".join(line)} # create dict with type id and card_str
+    json.append(_dict) if json[-1] != _dict else None # add last dict if it was not added yet
     file.close()
-    print(json)
+    # print(json)
     return json
 
 
