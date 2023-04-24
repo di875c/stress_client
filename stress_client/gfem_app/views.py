@@ -61,13 +61,30 @@ class BaseInteract(View):
             return self.delete(request, *args, **kwargs)
         return super(BaseInteract, self).dispatch(request, *args, **kwargs)
 
+    @staticmethod
+    def fields_from_request(table_name: str, parameters: dict) -> dict:
+        fields = dict(CONFIG['DATA_BASE'][table_name].get('fields'))
+        dynamic_fields = CONFIG['DATA_BASE'][table_name].get('dynamic_fields', dict())
+        for key, val in dynamic_fields.items():
+            print(f'{key=}, {val=}')
+            if key in parameters:
+                print(parameters.get(key))
+                fields.update({key: ''})
+                fields.update(val.get(parameters.get(key)[0].split()[1]))
+            else:
+                fields.update({key: ''})
+        return fields
+
     @error_function
     @prepare_request
     def get(self, request, table_name=None, url=None, parameters=None):
         file_format = request.GET.dict().get('file_type')
-        form = BaseDynamicForm(request.GET, {"static_fields": parameters})
+        print(parameters)
+        fields = self.fields_from_request(table_name, parameters)
+        form = BaseDynamicForm(request.GET, {"static_fields": fields})
         if not form.is_valid():
-            return render(request, 'table_form.html', {'form': form.as_table()})
+            data = {'error': 'неправильный запрос', 'form': form.as_table()}
+            return JsonResponse(data, status=402)
         parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
         response = requests.get(url, params=parameters)  # , timeout=4)
         if response.status_code == 200:
@@ -75,7 +92,7 @@ class BaseInteract(View):
                                                    file_format=file_format,
                                                    table_name=table_name)
             file_url = f"file_save?file={out_file.upload.url}" if out_file else None
-            data = {'form': form.as_table(), 'messages': 'Тестируем', "html": html_table,
+            data = {'messages': 'Тестируем', "html": html_table,
                     "load_to_file": file_url}
             return JsonResponse(data, status=200)
         elif response.status_code in (502, 422):
@@ -98,6 +115,12 @@ class BaseInteract(View):
             form = BaseDynamicForm(request.POST, {"static_fields": parameters, 'validate': False})
             if not form.is_valid():
                 return render(request, 'table_form.html', {'form': form})
+            # ToDo incorporate validation as in get request!!!
+            # fields = self.fields_from_request(table_name, parameters)
+            # form = BaseDynamicForm(request.GET, {"static_fields": fields})
+            # if not form.is_valid():
+            #     data = {'error': 'неправильный запрос', 'form': form.as_table()}
+            #     return JsonResponse(data, status=402)
             parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
             response = requests.post(url, params=parameters)
         # url = "https://46bda8ba-446a-4aa1-b765-00c57f94efe3.mock.pstmn.io" + '/db'
@@ -171,10 +194,12 @@ def file_save_view(request, template, *args, **kwargs):
 class AjaxFields(View):
     def get(self, request):
         param = request.GET.dict()
+        print(param)
         param = self.chain(request, param)
+        # print(param['form'])
         return render(request, 'table_form.html', param)
 
-    def chain(self, request, param):
+    def chain(self, request, param: dict) -> dict:
         table_name = param.get('table_name')
         if not table_name:
             return param
@@ -185,25 +210,28 @@ class AjaxFields(View):
                 self.save_in_file(*self.excel_input(request, table_name, param))
         return param
 
-    def dynamic_fields(self, request, table_name, param):
+    def dynamic_fields(self, request, table_name: str, param: dict) -> tuple:
+        param = dict(param)
         if table_name in CONFIG['DATA_BASE'] and 'dynamic_fields' in CONFIG['DATA_BASE'][table_name]:
-            # table_fields = CONFIG['DATA_BASE'][table_name]['dynamic_fields']
             param['dynamic_fields'] = CONFIG['DATA_BASE'][table_name]['dynamic_fields']
         return request, table_name, param
 
-    def add_dynamic_fields(self, request, table_name, param):
+    def add_dynamic_fields(self, request, table_name: str, param: dict) -> tuple:
+        param = dict(param)
         if table_name == 'add_dynamic_field':
             static_param = {key.replace('st_par_', ''): val for key, val in param.items() if key.startswith('st_par_')}
             param['form'] = BaseDynamicForm({"static_fields": static_param}).as_table()
         return request, table_name, param
 
-    def static_fields(self, request, table_name, param):
+    def static_fields(self, request, table_name: str, param: dict) -> tuple:
+        param = dict(param)
         if table_name in CONFIG['DATA_BASE'] and 'fields' in CONFIG['DATA_BASE'][table_name]:
             table_fields = CONFIG['DATA_BASE'][table_name]['fields']
             param['form'] = BaseDynamicForm({"static_fields": table_fields}).as_table()
         return request, table_name, param
 
-    def cs_input(self, request, table_name, param):
+    def cs_input(self, request, table_name: str, param: dict) -> tuple:
+        param = dict(param)
         if table_name in CONFIG['DATA_BASE']['Section']['dynamic_fields']['type']:
             table_fields = CONFIG['DATA_BASE']['Section']['dynamic_fields']['type'][table_name]
             table_fields.update(CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters'])
@@ -216,7 +244,8 @@ class AjaxFields(View):
             param['form'] = BaseDynamicForm({"static_fields": table_fields, "type_fields": 'float'}).as_table()
         return request, table_name, param
 
-    def excel_input(self, request, table_name, param):
+    def excel_input(self, request, table_name: str, param: dict) -> tuple:
+        param = dict(param)
         if param.get('excel_selection') == 'on':
             param['excel_selection'] = True
             param['form'] = UploadForm
@@ -224,7 +253,8 @@ class AjaxFields(View):
                 else None
         return request, table_name, param
 
-    def save_in_file(self, request, table_name, param):
+    def save_in_file(self, request, table_name: str, param: dict) -> tuple:
+        param = dict(param)
         if param.get('save_in_file') == 'on' and 'file_type' in CONFIG['DATA_BASE'][table_name]:
             param['save_file_form'] = CONFIG['DATA_BASE'][table_name]['file_type'].keys()
         return request, table_name, param

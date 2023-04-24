@@ -60,6 +60,7 @@ $(document).ready(function(){
             dataType: 'html',
             success: function(data) {
             $("#added-fields").html(data);
+            $("#added-fields").html(data['form'])
             }
           });
         });
@@ -74,13 +75,13 @@ $("#sender").click(function () {
         type: 'GET',
         success: function (data) {
           alert(data["messages"]);
-          $("#added-fields").html(data);
-          $("#added-fields").html(data['form']);
           $("#forces-table tbody").html(data['html']);
           $("#load-to-file").load(data['load_to_file']);
         },
         error: function (data) {
           alert(data.status + "\n" + data.responseJSON.error);
+          $("#added-fields").html(data.responseJSON.form);
+          console.log(data);
         }
       });
     });

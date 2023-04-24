@@ -5,19 +5,20 @@ import re
 TYPE_FIELD = {'float': forms.FloatField, 'str': forms.CharField}
 
 def validate_with_condition(value):
-    if re.search(r"^[=><]{1,2}[ ]\w+", value) or value == '' or \
+    if re.search(r"^[=><]{1,2}[ ]\w+", value) or value == '' or value == '---Select_table---' or \
+            re.search(r"^[a-zA-Z0-9]+\Z", value) or \
             re.search(r"^between[ ][+-]?((\d+\.?\d*)|(\.\d+))[ ][+-]?((\d+\.?\d*)|(\.\d+))", value):
         return
     else:
         raise forms.ValidationError(
-            "Your string has to include condition (==, >, between, etc.) and value",
+            "Запрос должен начинаться с (<, >=, <=, >, between, etc.) + пробел + значение. Либо значение без пробелов.",
             params={'value': value},
         )
 
 
 class BaseDynamicForm(forms.Form):
     def __init__(self, *args, **kwargs):
-        _condition = False
+        _condition = True
         for arg in args:
             if 'static_fields' in arg:
                 dynamic_fields = arg.pop('static_fields')

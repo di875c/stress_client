@@ -30,14 +30,14 @@ def error_function(func):
     return _wrapper
 
 
-def chunks(s, n):
+def chunks(s: str, n: int) -> str:
     """Produce `n`-character chunks from `s`."""
     # s = s.replace('\n', '')
     for start in range(0, len(s), n):
         yield s[start:start+n]
 
 
-def bdf_read_function(file, len_format):
+def bdf_read_function(file: object, len_format: int) -> list:
     """
     :param file: 'GRID*    21395                          1271.30786132813850.981140136719
                   *       206.04052734375
@@ -49,6 +49,8 @@ def bdf_read_function(file, len_format):
     """
     json = list()
     _dict = dict()
+    with open('./gfem_app/stress/card_config.yaml', encoding='utf-8') as f:
+        card_set = set(yaml.safe_load(f).keys())  # get set with card types from dedicated tables in DB
     for line in file:
         line = line.decode('utf-8')
         if line.startswith('$') or not line or line.startswith('END'):
@@ -56,12 +58,12 @@ def bdf_read_function(file, len_format):
         elif line.startswith('*') or line.startswith(' '):
             _dict['card_str'] += line
         else:
-            json.append(_dict) # add dict to json from previous loop
+            json.append(_dict) if _dict and _dict['type'].replace(' ', '') not in card_set \
+                else None  # add dict to json from previous loop
             _type, _id, *line = [_item for _item in chunks(line, len_format)]
-            _dict = {'type': _type, 'uid': int(_id), 'card_str': "".join(line)} # create dict with type id and card_str
-    json.append(_dict) if json[-1] != _dict else None # add last dict if it was not added yet
+            _dict = {'type': _type, 'uid': int(_id), 'card_str': "".join(line)}  # create dict with type id and card_str
+    json.append(_dict) if json[-1] != _dict else None  # add last dict if it was not added yet
     file.close()
-    # print(json)
     return json
 
 
@@ -89,7 +91,7 @@ def csv_reader_decarate(func):
 
 
 @time_decorate
-def extract_from_list(base_data, name='positions', replace_name='position'):
+def extract_from_list(base_data: dict, name='positions', replace_name='position') -> list:
     json_data = list()
     for _idx, _item in enumerate(base_data):
         if type(_item[name]) == list:
