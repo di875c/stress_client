@@ -28,13 +28,14 @@ def prepare_request(func):
         parameters = {}
         rct = request.POST if request.method == 'POST' else request.GET
         table_name = rct.get('table_name', None)
+        if not table_name or table_name == '---Select_table---':
+            return JsonResponse({'error': 'Wrong request. Table name is not valid'}, status=402)
         for k, v in rct.dict().items():
             if v and k not in ('_method', 'save_in_file', 'file_type', 'table_name') and v != '---Select_table---':
                 if rct['_method'] in ('post', 'put') or re.search(r"^[=><]{1,2}[ ]\w+", v):
                     parameters[k] = v
                 else:
                     parameters[k] = ['== ' + v]
-                    print(parameters[k])
         url = 'http://' + ':'.join([SERVER['host'], SERVER['port']]) + '/db'
         result = func(self, request, table_name, url, parameters)
         return result
@@ -83,7 +84,7 @@ class BaseInteract(View):
         fields = self.fields_from_request(table_name, parameters)
         form = BaseDynamicForm(request.GET, {"static_fields": fields})
         if not form.is_valid():
-            data = {'error': 'неправильный запрос', 'form': form.as_table()}
+            data = {'error': 'Wrong request.', 'form': form.as_table()}
             return JsonResponse(data, status=402)
         parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
         response = requests.get(url, params=parameters)  # , timeout=4)
@@ -112,15 +113,9 @@ class BaseInteract(View):
             response = requests.post(url, params=parameters, data=json.dumps({"parameters": dct}),
                                      headers={'Content-Type': 'application/json'})  # , timeout=4)
         else:
-            form = BaseDynamicForm(request.POST, {"static_fields": parameters, 'validate': False})
-            if not form.is_valid():
-                return render(request, 'table_form.html', {'form': form})
-            # ToDo incorporate validation as in get request!!!
-            # fields = self.fields_from_request(table_name, parameters)
-            # form = BaseDynamicForm(request.GET, {"static_fields": fields})
-            # if not form.is_valid():
-            #     data = {'error': 'неправильный запрос', 'form': form.as_table()}
-            #     return JsonResponse(data, status=402)
+            if len(parameters) == 0:  # Validation can't be done. Check only that parameters is not empty list.
+                return JsonResponse(data={'error': 'Wrong request. At least one field has to be filled.'},
+                                    status=402)
             parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
             response = requests.post(url, params=parameters)
         # url = "https://46bda8ba-446a-4aa1-b765-00c57f94efe3.mock.pstmn.io" + '/db'
@@ -144,9 +139,11 @@ class BaseInteract(View):
             response = requests.delete(url, params=parameters, data=json.dumps({"parameters": dct}),
                                        headers={'Content-Type': 'application/json'})
         else:
-            form = BaseDynamicForm(request.POST, {"static_fields": parameters})
+            fields = self.fields_from_request(table_name, parameters)
+            form = BaseDynamicForm(request.POST, {"static_fields": fields})
             if not form.is_valid():
-                return render(request, 'table_form.html', {'form': form})
+                data = {'error': 'Wrong request.', 'form': form.as_table()}
+                return JsonResponse(data, status=402)
             parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
             response = requests.delete(url, params=parameters)
         if response.status_code == 200:
@@ -168,9 +165,9 @@ class BaseInteract(View):
             response = requests.put(url, params=parameters, data=json.dumps({"parameters": dct}),
                                     headers={'Content-Type': 'application/json'})
         else:
-            form = BaseDynamicForm(request.POST, {"static_fields": parameters, 'validate': False})
-            if not form.is_valid():
-                return render(request, 'table_form.html', {'form': form})
+            if 'uid' not in parameters or parameters['uid'].isdidit():
+                return JsonResponse(data={'error': 'Wrong request. UID has to be integer.'},
+                                    status=402)
             parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
             response = requests.put(url, params=parameters)
         if response.status_code == 200:
@@ -225,14 +222,15 @@ class AjaxFields(View):
 
     def static_fields(self, request, table_name: str, param: dict) -> tuple:
         param = dict(param)
-        if table_name in CONFIG['DATA_BASE'] and 'fields' in CONFIG['DATA_BASE'][table_name]:
+        if table_name in CONFIG['DATA_BASE'] and 'fields' in CONFIG['DATA_BASE'][table_name] and \
+                table_name != '---Select_table---':
             table_fields = CONFIG['DATA_BASE'][table_name]['fields']
             param['form'] = BaseDynamicForm({"static_fields": table_fields}).as_table()
         return request, table_name, param
 
     def cs_input(self, request, table_name: str, param: dict) -> tuple:
         param = dict(param)
-        if table_name in CONFIG['DATA_BASE']['Section']['dynamic_fields']['type']:
+        if table_name in CONFIG['DATA_BASE']['Section']['dynamic_fields']['type'] and table_name != '---Select_table---':
             table_fields = CONFIG['DATA_BASE']['Section']['dynamic_fields']['type'][table_name]
             table_fields.update(CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters'])
             if table_name == "FEM-Polygon":

@@ -1,34 +1,61 @@
-function conditionsGenerate(form, input, label) {
-  x = input.value;
-  var input, label;
-  var parent = document.getElementById("parent-conditions");
-  cleanDiv(parent)
-  for (y = 0; x > y; y++) {
-    m_label = document.createElement('label');
-    m_label.innerText = 'condition ' + y;
-    input_x = document.createElement('input');
-    input_x.setAttribute('type', 'str');
-    input_x.value = '';
-    input_x.setAttribute('name', 'cond_key '+y);
-    label_x = document.createElement('label');
-    label_x.setAttribute('for', 'cond_key '+y);
-    label_x.innerText = 'column name';
-    input_y = document.createElement('input');
-    input_y.setAttribute('type', 'str');
-    input_y.setAttribute('value', '');
-    input_y.setAttribute('name', 'cond_val '+y);
-    label_y = document.createElement('label');
-    label_y.setAttribute('for', 'cond_val '+y);
-    label_y.innerText = 'condition: ';
-    parent.appendChild(m_label);
-    parent.appendChild(label_x);
-    parent.appendChild(input_x);
-    parent.appendChild(label_y);
-    parent.appendChild(input_y);
-    parent.appendChild(document.createElement('br'));
-  }
+function updateParamList(object, table_param, chk_param, fields_update, url){
+    $(object).change(function(){
+        var frm = $(table_param).serialize();
+        var chk = $(chk_param).serialize();
+        var data = frm +'&' + chk
+        $.ajax({
+            url: url,
+            data: data,
+            dataType: 'html',
+            success: function(data) {
+            $(fields_update).html(data);
+//            $(fields_update).html(data['form'])
+            }
+          });
+        });
+    }
+
+function senderFunction(url) {
+    var frm = $('#parameters-form');
+    $.ajax({
+        url: url,
+        data: frm.serialize(),
+        dataType: 'json',
+        success: function (data) {
+            alert(data["messages"]);
+            $("#forces-table tbody").html(data['html']);
+            $("#load-to-file").load(data['load_to_file']);
+        },
+        error: function (data) {
+//            console.log(data);
+            alert(data.status + "\n" + data.responseJSON.error);
+            $("#added-fields").html(data.responseJSON.form);
+        }
+      });
+    }
+
+function postFunction(url, obj) {
+   alert("данные отправлены на сервер");
+   var formData = new FormData(obj);
+   $.ajax({
+       type: 'POST',
+       url: url,
+       data: formData,
+       success: function (data) {
+            console.log(data);
+            alert(data["messages"]);
+            $("#added-fields").html(data);
+            $("#added-fields").html(data['form']);
+            $("#forces-table tbody").html(data['html']);
+            $("#load-to-file").load(data['load_to_file']);
+           },
+       error: function (data) {
+            console.log(data);
+            alert(data.status + "\n" + data.responseJSON.error);
+            },
+       cache: false,
+       contentType: false,
+       processData: false
+   })
 }
 
-function cleanDiv(div){
-  div.innerHTML = '';
-}

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 {% extends "hf_template.html" %}
 {%load static%}
 {% block content %}
-<script src={%static "js/gfem_java.js" %}>
-</script>
+<script src={%static "js/jquery.min.js" %}></script>
+<script src={%static "js/gfem_java.js" %}></script>
 <body>
 <div id="input-form" class="m-3">
     <form method="post" id="parameters-form">
@@ -26,7 +26,9 @@
         <hr>
                 <div class="d-grid gap-8 ">
                   <input type="hidden" name="_method" value="get">
-                  <button id="sender" type="button" class="btn btn-primary btn-block ms-5 me-5 mb-4" > Получить </button>
+                  <button id="sender" type="button" class="btn btn-primary btn-block ms-5 me-5 mb-4" onclick=senderFunction("{% url 'get_response' %}")> Получить </button>
+<!--                      > Получить </button>-->
+
                 </div>
     </form>
 </div>
@@ -47,45 +49,49 @@
  </div>
 </div>
 
-<script src={%static "js/jquery.min.js" %}></script>
 <script>
-$(document).ready(function(){
-    $(".update_param_list").change(function(){
-        var frm = $('#table_name').serialize();
-        var chk = $('#save_file_checkbox').serialize();
-        var data = frm +'&' + chk
-        $.ajax({
-            url: '{% url 'get_table_fields' %}',
-            data: data,
-            dataType: 'html',
-            success: function(data) {
-            $("#added-fields").html(data);
-            $("#added-fields").html(data['form'])
-            }
-          });
-        });
-    })
+$(document).ready(updateParamList(".update_param_list", "#table_name", "#save_file_checkbox", "#added-fields", "{% url "get_table_fields" %}"));
 </script>
-<script>
-$("#sender").click(function () {
-    var frm = $('#parameters-form');
-    $.ajax({
-        url: '{% url 'get_response' %}',
-        data: frm.serialize(),
-        type: 'GET',
-        success: function (data) {
-          alert(data["messages"]);
-          $("#forces-table tbody").html(data['html']);
-          $("#load-to-file").load(data['load_to_file']);
-        },
-        error: function (data) {
-          alert(data.status + "\n" + data.responseJSON.error);
-          $("#added-fields").html(data.responseJSON.form);
-          console.log(data);
-        }
-      });
-    });
-</script>
+<!--$("#sender").click(senderFunction("#parameters-form", "{% url 'get_response' %}", "#forces-table tbody", "#load-to-file", "#added-fields"));-->
+<!--<script>-->
+<!--$(document).ready(function(){-->
+<!--    $(".update_param_list").change(function(){-->
+<!--        var frm = $('#table_name').serialize();-->
+<!--        var chk = $('#save_file_checkbox').serialize();-->
+<!--        var data = frm +'&' + chk-->
+<!--        $.ajax({-->
+<!--            url: '{% url 'get_table_fields' %}',-->
+<!--            data: data,-->
+<!--            dataType: 'html',-->
+<!--            success: function(data) {-->
+<!--            $("#added-fields").html(data);-->
+<!--            $("#added-fields").html(data['form'])-->
+<!--            }-->
+<!--          });-->
+<!--        });-->
+<!--    })-->
+<!--</script>-->
+
+<!--<script>-->
+<!--$("#sender").click(function () {-->
+<!--    var frm = $('#parameters-form');-->
+<!--    $.ajax({-->
+<!--        url: '{% url 'get_response' %}',-->
+<!--        data: frm.serialize(),-->
+<!--        type: 'GET',-->
+<!--        success: function (data) {-->
+<!--          alert(data["messages"]);-->
+<!--          $("#forces-table tbody").html(data['html']);-->
+<!--          $("#load-to-file").load(data['load_to_file']);-->
+<!--        },-->
+<!--        error: function (data) {-->
+<!--          alert(data.status + "\n" + data.responseJSON.error);-->
+<!--          $("#added-fields").html(data.responseJSON.form);-->
+<!--          console.log(data);-->
+<!--        }-->
+<!--      });-->
+<!--    });-->
+<!--</script>-->
 </body>
 {% endblock %}
 </html>

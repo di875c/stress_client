@@ -3,7 +3,7 @@
 {% extends "hf_template.html" %}
 {%load static%}
 {% block content %}
-<script src={%static "js/gfem_java.js" %}>
+<script src={% static "js/gfem_java.js" %}>
 </script>
 <body>
 <div id="input-form" class="m-3">
@@ -18,7 +18,7 @@
             </datalist></select>
             <div class="mt-3">
             <input class="update_param_list" type="checkbox" name="excel_selection" id="excel_checkbox" checked>
-            <label for="excel_checkbox"> Load data from excel? </label>
+            <label for="excel_checkbox"> Загрузить данные из файла? </label>
                 </div>
          <hr>
                 <p>Поля таблицы для заполнения</p>
@@ -78,13 +78,12 @@ $(document).ready(function(){
             data: formData,
             success: function (data) {
                       alert(data["messages"]);
-                      $("#added-fields").html(data);
-                      $("#added-fields").html(data['form']);
                       $("#forces-table tbody").html(data['html']);
                       $("#load-to-file").load(data['load_to_file']);
                 },
              error: function (data) {
                  alert(data.status + "\n" + data.responseJSON.error);
+                 $("#added-fields").html(data.responseJSON.form);
                  },
             cache: false,
             contentType: false,

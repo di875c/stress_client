@@ -166,7 +166,6 @@ def convert_to_bdf(df: pd.DataFrame, table_name: str) -> str:
     return filename
 
 
-
 @error_function
 def convert_to_xlsx(df: pd.DataFrame, table_name: str, easy_format: bool) -> str:
     '''
