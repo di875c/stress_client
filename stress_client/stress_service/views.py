@@ -37,7 +37,8 @@ def cs_calculation_view(request, *args, **kwargs):
             lst_dct[0]['type'] = parameters['table_name']
             # print(lst_dct)
         else:
-            lst_dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE']['Sections']['ref_fields'])
+            lst_dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE']['Section']['ref_fields'])
+            print(lst_dct)
         sections, picture = cs_converter(lst_dct)
     else:
         dct = {k: float(v) for k, v in parameters.items() if k not in ('table_name', 'excel_selection')}
