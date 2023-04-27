@@ -15,8 +15,8 @@ def error_function(func):
             result = func(*args, **kwargs)
         except ConnectionError as error:
             return JsonResponse({'error': "Server Error {}".format(error)}, status=404)
-        except WindowsError as error:
-            return JsonResponse({'error': "Server Error {}".format(error)}, status=404)
+        # except WindowsError as error:
+        #     return JsonResponse({'error': "Server Error {}".format(error)}, status=404)
         except Exception as error:
             return JsonResponse({'error': 'some new error. {}'.format(error)}, status=404)
         return result
@@ -67,9 +67,8 @@ class BaseInteract(View):
         fields = dict(CONFIG['DATA_BASE'][table_name].get('fields'))
         dynamic_fields = CONFIG['DATA_BASE'][table_name].get('dynamic_fields', dict())
         for key, val in dynamic_fields.items():
-            print(f'{key=}, {val=}')
+            # print(f'{key=}, {val=}')
             if key in parameters:
-                print(parameters.get(key))
                 fields.update({key: ''})
                 fields.update(val.get(parameters.get(key)[0].split()[1]))
             else:
@@ -80,7 +79,6 @@ class BaseInteract(View):
     @prepare_request
     def get(self, request, table_name=None, url=None, parameters=None):
         file_format = request.GET.dict().get('file_type')
-        print(parameters)
         fields = self.fields_from_request(table_name, parameters)
         form = BaseDynamicForm(request.GET, {"static_fields": fields})
         if not form.is_valid():
@@ -165,7 +163,7 @@ class BaseInteract(View):
             response = requests.put(url, params=parameters, data=json.dumps({"parameters": dct}),
                                     headers={'Content-Type': 'application/json'})
         else:
-            if 'uid' not in parameters or parameters['uid'].isdidit():
+            if 'uid' not in parameters or not parameters['uid'].isdigit():
                 return JsonResponse(data={'error': 'Wrong request. UID has to be integer.'},
                                     status=402)
             parameters['table_name'] = CONFIG['VOCABULARY'].get(table_name, table_name)
@@ -191,7 +189,7 @@ def file_save_view(request, template, *args, **kwargs):
 class AjaxFields(View):
     def get(self, request):
         param = request.GET.dict()
-        print(param)
+        # print(param)
         param = self.chain(request, param)
         # print(param['form'])
         return render(request, 'table_form.html', param)
