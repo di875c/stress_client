@@ -38,7 +38,7 @@ def cs_calculation_view(request, *args, **kwargs):
             # print(lst_dct)
         else:
             lst_dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE']['Section']['ref_fields'])
-            print(lst_dct)
+            # print(lst_dct)
         sections, picture = cs_converter(lst_dct)
     else:
         dct = {k: float(v) for k, v in parameters.items() if k not in ('table_name', 'excel_selection')}
@@ -52,5 +52,4 @@ def cs_calculation_view(request, *args, **kwargs):
             "load_to_file": f"file_save?file={excel_file.upload.url}",
             'picture': picture
             }
-    # print('template rendering started')
     return JsonResponse(data, status=200)

@@ -45,14 +45,16 @@ def cs_converter(db_cs_lst: list) -> list:
     """
     sections = []
     for item in db_cs_lst:
-        section_config = CONFIG['DATA_BASE']['Section']['dynamic_fields']['type'][item['type']]
+        section_config = CONFIG['DATA_BASE']['Section']['dynamic_fields']['type'].get(item['type'])
+        if not section_config:
+            raise AttributeError('Wrong section name')
         if db_cs_lst[0]['type'] == 'FEM-Polygon':
             _points_number = int(db_cs_lst[0].pop('points'))
             dct = [(db_cs_lst[0].pop(f'y_{idx}'), db_cs_lst[0].pop(f'z_{idx}')) for idx in range(_points_number)]
         else:
             dct = {k: float(item.pop(k)) for k in list(item.keys()) if k in section_config or
                    k in CONFIG['CALCULATION_TYPE']['CROSS-SECTION']['STANDARD-PART']['Parameters']}
-            print(dct)
+            # print(dct)
         # print(dct)
         SECTION = cs_utils.__dict__.get(CONFIG['VOCABULARY'][item['type']])
         if SECTION:
