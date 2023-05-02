@@ -1,8 +1,5 @@
-from django.views import View
-from django.shortcuts import render
 from django.http import JsonResponse
-from stress_client.settings import SERVER, CONFIG
-from gfem_app.forms import UploadForm
+from stress_client.settings import CONFIG
 from .utils import uid_generate
 import pandas as pd
 from gfem_app.utils import from_xls_to_dict, convert_from_db
