@@ -67,7 +67,6 @@ class BaseInteract(View):
         fields = dict(CONFIG['DATA_BASE'][table_name].get('fields'))
         dynamic_fields = CONFIG['DATA_BASE'][table_name].get('dynamic_fields', dict())
         for key, val in dynamic_fields.items():
-            # print(f'{key=}, {val=}')
             if key in parameters:
                 fields.update({key: ''})
                 fields.update(val.get(parameters.get(key)[0].split()[1]))
@@ -106,7 +105,6 @@ class BaseInteract(View):
         if 'excel_selection' in parameters:
             dct = from_xls_to_dict(request.FILES['upload'], CONFIG['DATA_BASE'][table_name]['ref_fields'])
             print('size of json attached: ', sys.getsizeof(json.dumps(dct)))
-            #parameters = {'table_name': CONFIG['DATA_BASE'][table_name]['name_db']}
             parameters = {'table_name': CONFIG['VOCABULARY'].get(table_name, table_name)}
             response = requests.post(url, params=parameters, data=json.dumps({"parameters": dct}),
                                      headers={'Content-Type': 'application/json'})  # , timeout=4)
@@ -199,7 +197,7 @@ class AjaxFields(View):
         if not table_name:
             return param
         else:
-            # two rows without excel selection and with excel selection
+            # two chains without excel selection and with excel selection
             *args, param = self.save_in_file(*self.cs_input(*self.static_fields(*self.dynamic_fields(
                 *self.add_dynamic_fields(request, table_name, param))))) if 'excel_selection' not in param else \
                 self.save_in_file(*self.excel_input(request, table_name, param))

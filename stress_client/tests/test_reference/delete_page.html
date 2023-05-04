@@ -81,7 +81,7 @@
 <script src=/static/js/gfem_java.js> </script> <body>
 	<div id="input-form" class="m-3">
     <form method="post" id="parameters-form" onsubmit=postFunction("/ajax/get_response/",this)>
-          <p>Выберите таблицу для которых нужно получить данные</p>
+          <p>Выберите таблицу для которых нужно удалить данные</p>
           <select type="text" class="update_param_list" id="table_name" name="table_name" placeholder="Mетод расчета" list="method" required>
             <datalist id="table-name" >
 
@@ -115,6 +115,7 @@
             <label for="excel_checkbox"> Загрузить данные из файла? </label>
                 </div>
          <hr>
+                <p>Поля таблицы для заполнения</p>
         <div id="added-fields">
 
 
@@ -151,8 +152,8 @@ function updateFields(lst) {
 
 <hr>
 <div class="d-grid gap-8 ">
-	<input type="hidden" name="_method" value="post">
-	<button id="sender" type="submit" class="btn btn-primary btn-block ms-5 me-5 mb-4" )>Отправить</button>
+	<input type="hidden" name="_method" value="delete">
+	<button id="sender" type="submit" class="btn btn-danger btn-block ms-5 me-5 mb-4" >Удалить</button>
 </div>
 </form>
 </div>

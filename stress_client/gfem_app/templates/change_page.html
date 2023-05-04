@@ -3,12 +3,12 @@
 {% extends "hf_template.html" %}
 {%load static%}
 {% block content %}
-<script src={%static "js/gfem_java.js" %}>
-</script>
+<script src={%static "js/jquery.min.js" %}></script>
+<script src={%static "js/gfem_java.js" %}></script>
 <body>
 <div id="input-form" class="m-3">
     {% csrf_token %}
-    <form method="get" id="parameters-form">
+    <form method="post" id="parameters-form" onsubmit=postFunction("{% url 'get_response' %}",this)>
           <p>Выберите таблицу в которой нужно изменить данные</p>
           <select type="text" class="update_param_list" id="table_name" name="table_name" placeholder="Mетод расчета" list="method" required>
             <datalist id="table-name" >
@@ -48,51 +48,11 @@
           </table>
     </div>
  </div>
-</div>
 
-<script src={%static "js/jquery.min.js" %}></script>
+
 <script>
-$(document).ready(function(){
-    $(".update_param_list").change(function(){
-        var frm = $('#table_name').serialize();
-        var chk = $('#excel_checkbox').serialize();
-        var data = frm +'&' + chk
-        $.ajax({
-            url: '{% url 'get_table_fields' %}',
-            data: data,
-            success: function(data) {
-            $("#added-fields").html(data);
-            }
-          });
-        });
-    })
+$(document).ready(updateParamList(".update_param_list", "#table_name", "#excel_checkbox", "#added-fields", "{% url "get_table_fields" %}"));
 </script>
-<script>
-    $('#parameters-form').submit(function(e){
-        e.preventDefault();
-        alert("Запрос на обновление отправлен");
-        var formData = new FormData(this);
-        $.ajax({
-            type: 'POST',
-            url: '{% url 'get_response' %}',
-            data: formData,
-            success: function (data) {
-                      alert(data["messages"]);
-                      $("#added-fields").html(data);
-                      $("#added-fields").html(data['form']);
-                      $("#forces-table tbody").html(data['html']);
-                      $("#load-to-file").load(data['load_to_file']);
-                },
-             error: function (data) {
-                 alert(data.status + "\n" + data.responseJSON.error);
-                 },
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-    });
-    // end
-   </script>
 
 </body>
 {% endblock %}

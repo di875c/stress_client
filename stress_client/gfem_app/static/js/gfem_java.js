@@ -35,6 +35,7 @@ function senderFunction(url) {
     }
 
 function postFunction(url, obj) {
+   event.preventDefault();
    alert("данные отправлены на сервер");
    var formData = new FormData(obj);
    $.ajax({
@@ -42,7 +43,6 @@ function postFunction(url, obj) {
        url: url,
        data: formData,
        success: function (data) {
-            console.log(data);
             alert(data["messages"]);
             $("#added-fields").html(data);
             $("#added-fields").html(data['form']);
@@ -50,12 +50,12 @@ function postFunction(url, obj) {
             $("#load-to-file").load(data['load_to_file']);
            },
        error: function (data) {
-            console.log(data);
             alert(data.status + "\n" + data.responseJSON.error);
+            $("#added-fields").html(data.responseJSON.form);
             },
        cache: false,
        contentType: false,
        processData: false
-   })
+   });
 }
 
