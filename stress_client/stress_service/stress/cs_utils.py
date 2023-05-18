@@ -223,6 +223,7 @@ class ZSection(AnySections):
 
 
 class FemPolygon:
+    # Taken from open source
     def __init__(self, points_lst: list):
         self.polygon = Polygon(points_lst)
         self.geometry = Geometry(self.polygon)

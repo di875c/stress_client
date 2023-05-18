@@ -173,6 +173,7 @@ def convert_to_xlsx(df: pd.DataFrame, table_name: str, easy_format: bool) -> str
     return path to excel file
     '''
     filename = f'{table_name}.xlsx'
+    # TODO update file name to avoid rewriting by another user
     with pd.ExcelWriter(f'media/{filename}') as tmp:
         df.dropna(axis=1, how='all', inplace=True)
         # print(df)
