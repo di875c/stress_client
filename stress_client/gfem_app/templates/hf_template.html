@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {% load static %}
     <link href={%static "css/bootstrap.min.css" %} rel="stylesheet">
+    <link href={%static "css/loader-styles.css" %} rel="stylesheet">
     <script src={%static "js/bootstrap.bundle.min.js" %}></script>
 <head>
     <meta charset="UTF-8">
@@ -64,6 +65,9 @@
 <div style="margin-bottom:125px">
 {% block content %}
 {% endblock %}
+</div>
+<div class="loader-wrapper">
+    <span class="loader"></span>
 </div>
 
 </html>
